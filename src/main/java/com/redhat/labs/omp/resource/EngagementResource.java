@@ -19,6 +19,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -140,6 +141,32 @@ public class EngagementResource {
 
         return Response.ok(customerSuggestions).build();
     }
+
+    @GET
+    @Path("/search")
+    @SecurityRequirement(name = "jwt", scopes = {})
+    @APIResponses(value = { 
+            @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
+            @APIResponse(responseCode = "404", description = "No Engagement with search params found."),
+            @APIResponse(responseCode = "200", description = "Engagement matching search params returned.") })
+    @Operation(summary = "Returns engagement with matching search params")
+    public Response search(@QueryParam("subdomain") String subdomain) {
+
+        // validate at least one search criteria supplied
+        if(null == subdomain || subdomain.trim().length() == 0) {
+            return Response.status(Status.BAD_REQUEST).build();
+        }
+
+        Optional<Engagement> optional = engagementService.findEngagementBySubdomain(subdomain);
+
+        if(optional.isPresent()) {
+            return Response.ok(optional.get()).build();
+        }
+        
+        return Response.status(Status.NOT_FOUND).build();
+
+    }
+    
 
     @PUT
     @Path("/launch")

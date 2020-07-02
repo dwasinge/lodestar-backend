@@ -147,12 +147,12 @@ public class EngagementService {
 
     // Status comes from gitlab so it does not need to to be sync'd
     public Engagement updateStatusAndCommits(Hook hook) {
-    	LOGGER.debug("Hook for {} {}", hook.getCustomerName(), hook.getEngagementName());
-   	
+        LOGGER.debug("Hook for {} {}", hook.getCustomerName(), hook.getEngagementName());
+
         Optional<Engagement> optional = get(hook.getCustomerName(), hook.getEngagementName());
         if (!optional.isPresent()) {
-        	//try gitlab in case of special chars
-        	optional = getEngagementFromNamespace(hook);
+            // try gitlab in case of special chars
+            optional = getEngagementFromNamespace(hook);
         }
 
         Engagement persisted = optional.get();
@@ -172,15 +172,15 @@ public class EngagementService {
 
         return persisted;
     }
-    
+
     private Optional<Engagement> getEngagementFromNamespace(Hook hook) {
-    	//Need the translated customer name if using special chars
-    	Engagement gitEngagement = gitApi.getEngagementByNamespace(hook.getProject().getPathWithNamespace());
-    	Optional<Engagement> optional = get(gitEngagement.getCustomerName(), gitEngagement.getProjectName());
+        // Need the translated customer name if using special chars
+        Engagement gitEngagement = gitApi.getEngagementByNamespace(hook.getProject().getPathWithNamespace());
+        Optional<Engagement> optional = get(gitEngagement.getCustomerName(), gitEngagement.getProjectName());
         if (!optional.isPresent()) {
             throw new ResourceNotFoundException("no engagement found. unable to update from hook.");
         }
-    	return optional;
+        return optional;
     }
 
     /**
@@ -235,6 +235,17 @@ public class EngagementService {
         allEngagements.stream().forEach(engagement -> customers.add(engagement.getCustomerName()));
 
         return customers;
+    }
+
+    /**
+     * Returns an {@link Optional} containing an {@link Engagement} matching the
+     * supplied subdomain. Otherwise, an empty {@link Optional} is returned.
+     * 
+     * @param subdomain
+     * @return
+     */
+    public Optional<Engagement> findEngagementBySubdomain(String subdomain) {
+        return Optional.ofNullable(repository.findBySubdomain(subdomain));
     }
 
     /**
