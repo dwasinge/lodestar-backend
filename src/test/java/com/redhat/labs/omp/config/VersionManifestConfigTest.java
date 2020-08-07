@@ -7,13 +7,12 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redhat.labs.omp.model.VersionManifest;
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 
 import io.quarkus.test.junit.QuarkusTest;
 
-@EmbeddedMongoTest
 @QuarkusTest
-public class VersionManifestConfigTest {
+public class VersionManifestConfigTest extends AbstractBackendTest {
 
     @Inject
     VersionManifestConfig vmc;

@@ -12,14 +12,13 @@ import org.junit.jupiter.api.Test;
 
 import com.redhat.labs.omp.model.Engagement;
 import com.redhat.labs.omp.service.EngagementService;
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 import com.redhat.labs.utils.TokenUtils;
 
 import io.quarkus.test.junit.QuarkusTest;
 
-@EmbeddedMongoTest
 @QuarkusTest
-class CustomerSuggestionTest {
+class CustomerSuggestionTest extends AbstractBackendTest {
 	private static final String ANSWER = "Red Hat";
 	private static final String SUGGESTION_URL = "/engagements/customers/suggest";
 	

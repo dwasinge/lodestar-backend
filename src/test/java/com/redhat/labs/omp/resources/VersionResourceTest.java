@@ -6,14 +6,13 @@ import static org.hamcrest.CoreMatchers.is;
 
 import org.junit.jupiter.api.Test;
 
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
-@EmbeddedMongoTest
 @QuarkusTest
-public class VersionResourceTest {
+public class VersionResourceTest extends AbstractBackendTest {
 
     @Test
     public void testValidResourceVersion() {

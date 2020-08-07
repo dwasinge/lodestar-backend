@@ -24,15 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 import com.redhat.labs.utils.TokenUtils;
 
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
 
-@EmbeddedMongoTest
 @QuarkusTest
-public class EngagementEventSocketTest {
+public class EngagementEventSocketTest extends AbstractBackendTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EngagementEventSocketTest.class);
     private static final LinkedBlockingDeque<String> MESSAGES = new LinkedBlockingDeque<>();

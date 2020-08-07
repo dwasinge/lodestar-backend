@@ -8,14 +8,13 @@ import java.util.HashMap;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 import com.redhat.labs.utils.TokenUtils;
 
 import io.quarkus.test.junit.QuarkusTest;
 
-@EmbeddedMongoTest
 @QuarkusTest
-public class ConfigResourceTest {
+public class ConfigResourceTest extends AbstractBackendTest {
 
     @ConfigProperty(name = "configFileCacheKey", defaultValue = "schema/config.yml")
     String configFileCacheKey;

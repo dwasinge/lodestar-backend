@@ -5,13 +5,12 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.wildfly.common.Assert;
 
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 
 import io.quarkus.test.junit.QuarkusTest;
 
-@EmbeddedMongoTest
 @QuarkusTest
-public class NameValidatorTest {
+public class NameValidatorTest extends AbstractBackendTest {
 
     @Inject
     NameValidator validator;

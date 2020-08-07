@@ -9,15 +9,14 @@ import org.junit.jupiter.api.Test;
 
 import com.redhat.labs.omp.model.Engagement;
 import com.redhat.labs.omp.service.EngagementService;
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 import com.redhat.labs.utils.ResourceLoader;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 
-@EmbeddedMongoTest
 @QuarkusTest
-public class StatusResourceTest {
+public class StatusResourceTest extends AbstractBackendTest {
     
     @Inject
     EngagementService engagementService;

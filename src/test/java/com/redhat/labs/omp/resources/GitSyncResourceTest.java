@@ -17,16 +17,15 @@ import org.junit.jupiter.api.Test;
 
 import com.redhat.labs.omp.model.Engagement;
 import com.redhat.labs.omp.rest.client.MockOMPGitLabAPIService.SCENARIO;
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 import com.redhat.labs.utils.TokenUtils;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 
-@EmbeddedMongoTest
 @QuarkusTest
-public class GitSyncResourceTest {
+public class GitSyncResourceTest extends AbstractBackendTest {
 
     @Inject
     Jsonb quarkusJsonb;

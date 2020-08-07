@@ -13,13 +13,12 @@ import com.redhat.labs.omp.model.Engagement;
 import com.redhat.labs.omp.model.GitlabProject;
 import com.redhat.labs.omp.model.Hook;
 import com.redhat.labs.omp.model.Launch;
-import com.redhat.labs.utils.EmbeddedMongoTest;
+import com.redhat.labs.utils.AbstractBackendTest;
 
 import io.quarkus.test.junit.QuarkusTest;
 
-@EmbeddedMongoTest
 @QuarkusTest
-class EngagementServiceTest {
+class EngagementServiceTest extends AbstractBackendTest {
 
 	
 	@Inject
