@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -21,6 +22,7 @@ import javax.json.bind.Jsonb;
 
 import org.junit.jupiter.api.Test;
 
+import com.redhat.labs.omp.model.Artifact;
 import com.redhat.labs.omp.model.Category;
 import com.redhat.labs.omp.model.Engagement;
 import com.redhat.labs.omp.rest.client.MockOMPGitLabAPIService.SCENARIO;
@@ -1467,6 +1469,82 @@ public class EngagementResourceTest {
 
     }
 
+    @Test
+    void testGetArtifactTypes() throws Exception {
+
+        HashMap<String, Long> timeClaims = new HashMap<>();
+        String token = TokenUtils.generateTokenString("/JwtClaimsWriter.json", timeClaims);
+
+        // create engagements with artifacts
+        mockEngagementWithArtifacts().stream()
+            .forEach(e -> {
+
+                String body = quarkusJsonb.toJson(e);
+
+                given()
+                .when()
+                    .auth()
+                    .oauth2(token)
+                    .body(body)
+                    .contentType(ContentType.JSON)
+                    .post("/engagements")
+                .then()
+                    .statusCode(201);
+                    
+
+            });
+
+        // get all artifact types
+        given()
+            .auth()
+            .oauth2(token)
+            .contentType(ContentType.JSON)
+        .when()
+            .get("/engagements/artifact/types")
+        .then()
+            .statusCode(200)
+            .body(containsString("demo"))
+            .body(containsString("report"))
+            .body(containsString("note"));
+
+        // get all artifact types by suggestion
+        given()
+            .auth()
+            .oauth2(token)
+            .contentType(ContentType.JSON)
+            .queryParam("suggest", "de")
+        .when()
+            .get("/engagements/artifact/types")
+        .then()
+            .statusCode(200)
+            .body(containsString("demo"));
+
+        given()
+            .auth()
+            .oauth2(token)
+            .contentType(ContentType.JSON)
+            .queryParam("suggest", "rE")
+        .when()
+            .get("/engagements/artifact/types")
+        .then()
+            .statusCode(200)
+            .body(containsString("report"));
+
+        given()
+            .auth()
+            .oauth2(token)
+            .contentType(ContentType.JSON)
+            .queryParam("suggest", "E")
+        .when()
+            .get("/engagements/artifact/types")
+        .then()
+            .statusCode(200)
+            .body(containsString("demo"))
+            .body(containsString("report"))
+            .body(containsString("note"));
+
+    }
+
     private Map<String, Boolean> validateCategories(Category[] categories) {
 
         Map<String, Boolean> map = new HashMap<>();
@@ -1494,6 +1572,33 @@ public class EngagementResourceTest {
         return map;
 
     }
+
+    private List<Engagement> mockEngagementWithArtifacts() {
+
+        Artifact a1 = mockArtifact("E1 Week 1 Report", "report", "http://report-week-1");
+        Artifact a2 = mockArtifact("E1 Demo Week 1", "demo", "http://demo-week-1");
+        Artifact a3 = mockArtifact("E1 Demo Week 2", "demo", "http://demo-week-2");
+
+        Engagement e1 = mockEngagement();
+        e1.setCustomerName("customer1");
+        e1.setArtifacts(Arrays.asList(a1, a2, a3));
+
+        Artifact a4 = mockArtifact("E2 Week 1 Report", "report", "http://report-week-1");
+        Artifact a5 = mockArtifact("E2 Demo Week 1", "demo", "http://demo-week-1");
+        Artifact a6 = mockArtifact("E2 Demo Week 2", "demo", "http://demo-week-2");
+        Artifact a7 = mockArtifact("E2 Notes", "note", "http://notes");
+
+        Engagement e2 = mockEngagement();
+        e2.setCustomerName("customer2");
+        e2.setArtifacts(Arrays.asList(a4, a5, a6, a7));
+
+        return Arrays.asList(e1, e2);
+    }
+
+    private Artifact mockArtifact(String title, String type, String link) {
+        return Artifact.builder().title(title).type(type).linkAddress(link).build();
+    }
+
     private List<Engagement> mockEngagementsWithCategories() {
 
         Category c1 = mockCategory("c1");
