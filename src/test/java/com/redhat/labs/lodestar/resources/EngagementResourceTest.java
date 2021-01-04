@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import com.redhat.labs.lodestar.model.Artifact;
 import com.redhat.labs.lodestar.model.Category;
 import com.redhat.labs.lodestar.model.Engagement;
+import com.redhat.labs.lodestar.model.HostingEnvironment;
 import com.redhat.labs.lodestar.rest.client.MockLodeStarGitLabAPIService.SCENARIO;
 import com.redhat.labs.lodestar.utils.EmbeddedMongoTest;
 import com.redhat.labs.lodestar.utils.TokenUtils;
@@ -542,7 +543,8 @@ public class EngagementResourceTest {
         Engagement engagement = mockEngagement();
         String subdomain = "asuperrandomsubdomain";
         engagement.setProjectName("aRandomProjectName");
-        engagement.setOcpSubDomain(subdomain);
+        HostingEnvironment env = HostingEnvironment.builder().environmentName("e1").ocpSubDomain(subdomain).build();
+        engagement.setHostingEnvironments(Arrays.asList(env));
 
 
         String body = quarkusJsonb.toJson(engagement);
@@ -562,11 +564,13 @@ public class EngagementResourceTest {
 
         Engagement engagement = mockEngagement();
         engagement.setProjectName("aRandomProjectName");
-        engagement.setOcpSubDomain("aSuperRandomSubdomain");
+        HostingEnvironment env = HostingEnvironment.builder().environmentName("e1").ocpSubDomain("aSuperRandomSubdomain").build();
+        engagement.setHostingEnvironments(Arrays.asList(env));
 
         Engagement engagement2 = mockEngagement();
         engagement2.setProjectName("anotherRandomName");
-        engagement2.setOcpSubDomain("aSuperRandomSubdomain");
+        HostingEnvironment env2 = HostingEnvironment.builder().environmentName("e2").ocpSubDomain("aSuperRandomSubdomain").build();
+        engagement2.setHostingEnvironments(Arrays.asList(env2));
 
         String body = quarkusJsonb.toJson(engagement);
         String body2 = quarkusJsonb.toJson(engagement2);
@@ -1705,7 +1709,6 @@ public class EngagementResourceTest {
         Engagement e1 = mockEngagement();
         e1.setCustomerName("customer1");
         e1.setArtifacts(Arrays.asList(a1, a2, a3));
-        e1.setOcpSubDomain(null);
 
         Artifact a4 = mockArtifact("E2 Week 1 Report", "report", "http://report-week-1");
         Artifact a5 = mockArtifact("E2 Demo Week 1", "demo", "http://demo-week-1");
@@ -1715,7 +1718,6 @@ public class EngagementResourceTest {
         Engagement e2 = mockEngagement();
         e2.setCustomerName("customer2");
         e2.setArtifacts(Arrays.asList(a4, a5, a6, a7));
-        e2.setOcpSubDomain(null);
 
         return Arrays.asList(e1, e2);
     }
@@ -1732,7 +1734,6 @@ public class EngagementResourceTest {
         Engagement e1 = mockEngagement();
         e1.setCustomerName("customer1");
         e1.setCategories(Arrays.asList(c1, c2));
-        e1.setOcpSubDomain(null);
 
         Category c3 = mockCategory("C2");
         Category c4 = mockCategory("c4");
@@ -1741,7 +1742,6 @@ public class EngagementResourceTest {
         Engagement e2 = mockEngagement();
         e2.setCustomerName("customer2");
         e2.setCategories(Arrays.asList(c3,c4,c5));
-        e2.setOcpSubDomain(null);
 
         return Arrays.asList(e1, e2);
 
@@ -1758,8 +1758,9 @@ public class EngagementResourceTest {
                 .archiveDate("20170930").engagementLeadName("Mister Lead").engagementLeadEmail("mister@lead.com")
                 .technicalLeadName("Mister Techlead").technicalLeadEmail("mister@techlead.com")
                 .customerContactName("Customer Contact").customerContactEmail("customer@contact.com")
-                .ocpCloudProviderName("GCP").ocpCloudProviderRegion("West").ocpVersion("v4.2").ocpSubDomain("jello")
-                .ocpPersistentStorageSize("50GB").ocpClusterSize("medium").build();
+                // .ocpCloudProviderName("GCP").ocpCloudProviderRegion("West").ocpVersion("v4.2").ocpSubDomain("jello")
+                // .ocpPersistentStorageSize("50GB").ocpClusterSize("medium")
+                .build();
 
         return engagement;
 

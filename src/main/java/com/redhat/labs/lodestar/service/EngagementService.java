@@ -29,6 +29,7 @@ import com.redhat.labs.lodestar.model.Engagement;
 import com.redhat.labs.lodestar.model.EngagementUser;
 import com.redhat.labs.lodestar.model.FileAction;
 import com.redhat.labs.lodestar.model.Hook;
+import com.redhat.labs.lodestar.model.HostingEnvironment;
 import com.redhat.labs.lodestar.model.Launch;
 import com.redhat.labs.lodestar.model.Status;
 import com.redhat.labs.lodestar.model.event.BackendEvent;
@@ -209,10 +210,20 @@ public class EngagementService {
      */
     void validateSubdomainOnCreate(Engagement engagement) {
 
-        String subdomain = engagement.getOcpSubDomain();
-        if (subdomain != null && doesSubdomainExist(subdomain)) {
-            throw new WebApplicationException(
-                    String.format("The requested subdomain, %s, is already in use", subdomain), HttpStatus.SC_CONFLICT);
+        if (null != engagement.getHostingEnvironments()) {
+
+            // validate each subdomain
+            List<String> subdomainsInUse = engagement.getHostingEnvironments().stream()
+                    .filter(env -> null != env.getOcpSubDomain())
+                    .filter(env -> doesSubdomainExist(env.getOcpSubDomain())).map(env -> env.getOcpSubDomain())
+                    .collect(Collectors.toList());
+
+            if (!subdomainsInUse.isEmpty()) {
+                throw new WebApplicationException(
+                        String.format("The following subdomains are already in use: %s", subdomainsInUse),
+                        HttpStatus.SC_CONFLICT);
+            }
+
         }
 
     }
@@ -226,17 +237,40 @@ public class EngagementService {
      */
     void validateSubdomainOnUpdate(Engagement toUpdate, Engagement existing) {
 
-        String subdomain = toUpdate.getOcpSubDomain();
-        if (subdomain != null && !subdomain.equalsIgnoreCase(existing.getOcpSubDomain())
-                && doesSubdomainExist(subdomain)) {
-            throw new WebApplicationException(
-                    String.format("The requested subdomain, %s, is already in use", subdomain), HttpStatus.SC_CONFLICT);
+        if(null != toUpdate.getHostingEnvironments()) {
+
+            List<String> subdomainsInUse = toUpdate.getHostingEnvironments().stream()
+                .filter(env -> null != env.getOcpSubDomain())
+                .filter(env -> environmentsContainsNameButNotSubdomain(existing.getHostingEnvironments(), env.getEnvironmentName(), env.getOcpSubDomain()).isPresent())
+                .filter(env -> doesSubdomainExist(env.getOcpSubDomain()))
+                .map(env -> env.getOcpSubDomain())
+                .collect(Collectors.toList());
+LOGGER.info("subdomains in use: {}", subdomainsInUse);
+                if(!subdomainsInUse.isEmpty()) {
+                    throw new WebApplicationException(
+                        String.format("The following subdomains are already in use: %s", subdomainsInUse),
+                        HttpStatus.SC_CONFLICT);
+                }
+                
         }
 
     }
 
+    Optional<HostingEnvironment> environmentsContainsNameButNotSubdomain(List<HostingEnvironment> hostingEnvironments,
+            String name, String subdomain) {
+
+        if (null == hostingEnvironments) {
+            return Optional.empty();
+        }
+
+        return hostingEnvironments.stream().filter(env -> name.equalsIgnoreCase(env.getEnvironmentName()))
+                .filter(env -> !subdomain.equalsIgnoreCase(env.getEnvironmentName())).findFirst();
+
+    }
+
     /**
-     * Return false if subdomain is null, blank, or is not found in the data store.  Otherwise, true.
+     * Return false if subdomain is null, blank, or is not found in the data store.
+     * Otherwise, true.
      * 
      * @param subdomain
      */
