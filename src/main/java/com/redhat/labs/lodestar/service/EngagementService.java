@@ -396,18 +396,6 @@ public class EngagementService {
     }
 
     /**
-     * Sets the {@link FileAction} to the provided action if the {@link Engagement}
-     * does not have it set.
-     * 
-     * @param engagement
-     * @param action
-     */
-//    void setEngagementAction(Engagement engagement, FileAction action) {
-//        // set only if action not already assigned
-//        engagement.setAction((null != engagement.getAction()) ? engagement.getAction() : action);
-//    }
-
-    /**
      * Sets the last update timestamp on the provided {@link Engagement}. Returns
      * the prior value, which could be null.
      * 
@@ -644,16 +632,18 @@ public class EngagementService {
      */
     public long setNullUuids() {
 
-        // TODO: This needs to send update event
-
         // update UUIDs on engagements and engagment users if missing
         List<Engagement> updated = repository.streamAll().filter(e -> uuidUpdated(e)).map(e -> {
-//            setEngagementAction(e, FileAction.update);
             e.setLastUpdateByName(BACKEND_BOT);
             e.setLastUpdateByEmail(BACKEND_BOT_EMAIL);
             LOGGER.debug("uuid(s) updated for enagement {}", e.getUuid());
             return e;
         }).collect(Collectors.toList());
+
+        // send updates to git api
+        updated.stream().forEach(e -> {
+            eventBus.sendAndForget(EventType.UPDATE_ENGAGEMENT_EVENT_ADDRESS, e);
+        });
 
         long count = updated.size();
 
