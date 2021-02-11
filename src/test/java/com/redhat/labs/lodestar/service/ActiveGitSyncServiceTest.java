@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 
 import com.google.common.collect.Lists;
 import com.redhat.labs.lodestar.model.ActiveSync;
+import com.redhat.labs.lodestar.model.event.EventType;
 import com.redhat.labs.lodestar.repository.ActiveSyncRepository;
 
 import io.vertx.mutiny.core.eventbus.EventBus;
@@ -25,7 +26,7 @@ class ActiveGitSyncServiceTest {
 
         repository = Mockito.mock(ActiveSyncRepository.class);
         eventBus = Mockito.mock(EventBus.class);
-        
+
         service = new ActiveGitSyncService();
         service.activeSyncRepository = repository;
         service.eventBus = eventBus;
@@ -36,7 +37,7 @@ class ActiveGitSyncServiceTest {
     void tearDown() {
         Mockito.reset(repository, eventBus);
     }
-    
+
     @Test
     void testCheckIfActiveNoExistingRecord() {
 
@@ -48,8 +49,7 @@ class ActiveGitSyncServiceTest {
     @Test
     void testCheckIfActiveExistingRecordAlreayActive() {
 
-        
-        ActiveSync record = new ActiveSync(service.getUuid(), LocalDateTime.now()); 
+        ActiveSync record = new ActiveSync(service.getUuid(), LocalDateTime.now());
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record));
 
         service.onStart(null);
@@ -62,7 +62,6 @@ class ActiveGitSyncServiceTest {
     @Test
     void testCheckIfActiveExistingRecordAlreayActiveMultipleRecords() {
 
-        
         ActiveSync record1 = new ActiveSync(service.getUuid(), LocalDateTime.now());
         ActiveSync record2 = new ActiveSync(UUID.randomUUID(), LocalDateTime.now());
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record1, record2));
@@ -86,7 +85,6 @@ class ActiveGitSyncServiceTest {
         Mockito.verify(repository, Mockito.times(0)).delete(Mockito.any(ActiveSync.class));
         Mockito.verify(repository, Mockito.times(1)).persistOrUpdate(Mockito.any(ActiveSync.class));
 
-
     }
 
     @Test
@@ -101,7 +99,58 @@ class ActiveGitSyncServiceTest {
         Mockito.verify(repository, Mockito.times(0)).delete(Mockito.any(ActiveSync.class));
         Mockito.verify(repository, Mockito.times(0)).persistOrUpdate(Mockito.any(ActiveSync.class));
 
+    }
+
+    @Test
+    void testRepopulateDbIfEmptyNotActive() {
+
+        service.repopulateDbIfEmpty();
+
+        Mockito.verify(eventBus,
+                Mockito.times(0)).sendAndForget(Mockito.eq(EventType.REFRESH_DATABASE_EVENT_ADDRESS), Mockito.any());
 
     }
-    
+
+    @Test
+    void testRepopulateDbIfEmptyActive() {
+
+        ActiveSync record = new ActiveSync(service.getUuid(), LocalDateTime.now());
+        Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record));
+
+        service.onStart(null);
+
+        service.repopulateDbIfEmpty();
+
+        Mockito.verify(eventBus).sendAndForget(Mockito.eq(EventType.REFRESH_DATABASE_EVENT_ADDRESS), Mockito.any());
+
+    }
+
+    @Test
+    void testCheckForNullUuidsNotActive() {
+
+        service.checkForNullUuids();
+
+        Mockito.verify(eventBus,
+                Mockito.times(0)).sendAndForget(Mockito.eq(EventType.SET_UUID_EVENT_ADDRESS), Mockito.any());
+
+    }
+
+    @Test
+    void testCheckForNullUuidsActive() {
+
+        ActiveSync record = new ActiveSync(service.getUuid(), LocalDateTime.now());
+        Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record));
+
+        service.onStart(null);
+
+        // call to send event first time
+        service.checkForNullUuids();
+
+        // call again to verify only one event sent
+
+        Mockito.verify(eventBus,
+                Mockito.times(1)).sendAndForget(Mockito.eq(EventType.SET_UUID_EVENT_ADDRESS), Mockito.any());
+
+    }
+
 }
