@@ -4,16 +4,38 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 
-import org.junit.jupiter.api.Test;
+import javax.inject.Inject;
+import javax.json.bind.Jsonb;
 
-import com.redhat.labs.lodestar.utils.EmbeddedMongoTest;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import com.redhat.labs.lodestar.model.status.VersionManifestV1;
+import com.redhat.labs.lodestar.repository.ActiveSyncRepository;
+import com.redhat.labs.lodestar.repository.EngagementRepository;
+import com.redhat.labs.lodestar.rest.client.LodeStarStatusApiClient;
+import com.redhat.labs.lodestar.utils.ResourceLoader;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.http.ContentType;
 
-@EmbeddedMongoTest
 @QuarkusTest
 class VersionResourceTest {
+
+    @Inject
+    Jsonb jsonb;
+
+    @InjectMock
+    ActiveSyncRepository acRepository;
+
+    @InjectMock
+    EngagementRepository eRepository;
+
+    @InjectMock
+    @RestClient
+    LodeStarStatusApiClient statusClient;
 
     @Test
     void testValidResourceVersion() {
@@ -87,6 +109,10 @@ class VersionResourceTest {
 
     @Test
     void testValidResourceVersionManifest() {
+
+        String json = ResourceLoader.load("status-service/version-manifest.yaml");
+        VersionManifestV1 vm = jsonb.fromJson(json, VersionManifestV1.class);
+        Mockito.when(statusClient.getVersionManifestV1()).thenReturn(vm);
 
         given()
         .when()

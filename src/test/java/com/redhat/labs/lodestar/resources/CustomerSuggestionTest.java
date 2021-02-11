@@ -9,20 +9,29 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import com.google.common.collect.Lists;
 import com.redhat.labs.lodestar.model.Engagement;
+import com.redhat.labs.lodestar.repository.ActiveSyncRepository;
+import com.redhat.labs.lodestar.repository.EngagementRepository;
 import com.redhat.labs.lodestar.service.EngagementService;
-import com.redhat.labs.lodestar.utils.EmbeddedMongoTest;
 import com.redhat.labs.lodestar.utils.TokenUtils;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 
-@EmbeddedMongoTest
 @QuarkusTest
 class CustomerSuggestionTest {
 	private static final String ANSWER = "Red Hat";
 	private static final String SUGGESTION_URL = "/engagements/customers/suggest";
 	
+    @InjectMock
+    ActiveSyncRepository acRepository;
+
+    @InjectMock
+    EngagementRepository eRepository;
+
 	@Inject
 	EngagementService engagementService;
 	
@@ -35,7 +44,9 @@ class CustomerSuggestionTest {
 		
 		Engagement engagement = new EngagementResourceTest().mockEngagement();
 		engagement.setCustomerName(ANSWER);
-		engagementService.create(engagement);
+		
+		Mockito.when(eRepository.findCustomerSuggestions(Mockito.anyString())).thenReturn(Lists.newArrayList(engagement));
+
 	}
 	
 	@Test void testSuggestionsExactSuccess() throws Exception {

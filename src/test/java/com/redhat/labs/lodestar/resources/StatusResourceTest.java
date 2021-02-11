@@ -3,25 +3,27 @@ package com.redhat.labs.lodestar.resources;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.is;
 
+import java.util.Optional;
+
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.redhat.labs.lodestar.model.Engagement;
+import com.redhat.labs.lodestar.repository.ActiveSyncRepository;
+import com.redhat.labs.lodestar.repository.EngagementRepository;
+import com.redhat.labs.lodestar.rest.client.LodeStarGitLabAPIService;
 import com.redhat.labs.lodestar.rest.client.LodeStarStatusApiClient;
 import com.redhat.labs.lodestar.service.EngagementService;
-import com.redhat.labs.lodestar.utils.EmbeddedMongoTest;
 import com.redhat.labs.lodestar.utils.ResourceLoader;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.restassured.http.ContentType;
 
-@EmbeddedMongoTest
 @QuarkusTest
 class StatusResourceTest {
     
@@ -31,17 +33,25 @@ class StatusResourceTest {
     @InjectMock
     @RestClient
     LodeStarStatusApiClient statusClient;
+
+    @InjectMock
+    @RestClient
+    LodeStarGitLabAPIService gitApiClient;
+
+    @InjectMock
+    ActiveSyncRepository acRepository;
+
+    @InjectMock
+    EngagementRepository eRepository;
     
-    @BeforeEach
-    void seed() {
-        Engagement engagement = Engagement.builder().customerName("jello").projectName("exists").build();
-        engagementService.create(engagement);
-    }
-    
-    
+    Engagement engagement = Engagement.builder().customerName("jello").projectName("exists").build();
+        
     @Test
     void testStatusValid() {
-        
+
+        Mockito.when(eRepository.findByCustomerNameAndProjectName("jello", "exists"))
+            .thenReturn(Optional.of(engagement));
+
         String body = ResourceLoader.load("StatusReqValid.json");
                 
         given()
@@ -52,11 +62,19 @@ class StatusResourceTest {
             .post("/status/hook")
         .then()
             .statusCode(200);
+
+        Mockito.verify(gitApiClient).getStatus("jello", "exists");
+        Mockito.verify(gitApiClient).getCommits("jello", "exists");
+        Mockito.verify(eRepository).update(Mockito.any(Engagement.class));
+
     } 
     
     @Test
     void testStatusNoStatusUpdate() {
         
+        Mockito.when(eRepository.findByCustomerNameAndProjectName("jello", "exists"))
+            .thenReturn(Optional.of(engagement));
+
         String body = ResourceLoader.load("StatusReqValidNoUpdate.json");
         
         given()
@@ -67,6 +85,11 @@ class StatusResourceTest {
             .post("/status/hook")
         .then()
             .statusCode(200);
+
+        Mockito.verify(gitApiClient, Mockito.times(0)).getStatus("jello", "exists");
+        Mockito.verify(gitApiClient).getCommits("jello", "exists");
+        Mockito.verify(eRepository).update(Mockito.any(Engagement.class));
+
     } 
 
     @Test
@@ -81,6 +104,9 @@ class StatusResourceTest {
     
     @Test
     void testDeletedHook() {
+        
+        Mockito.when(eRepository.findByCustomerNameAndProjectName("jello", "exists", Optional.empty()))
+            .thenReturn(Optional.of(engagement));
         String body = ResourceLoader.load("StatusDeleted.json");
         
         given()
@@ -91,6 +117,9 @@ class StatusResourceTest {
             .post("/status/deleted")
         .then()
             .statusCode(204);
+
+        Mockito.verify(eRepository).delete(engagement);
+
     }
     
     @Test
@@ -105,6 +134,8 @@ class StatusResourceTest {
             .post("/status/deleted")
         .then()
             .statusCode(200);
+
+        Mockito.verify(eRepository, Mockito.times(0)).delete(Mockito.any(Engagement.class));
     }
     
     @Test
@@ -119,6 +150,8 @@ class StatusResourceTest {
             .post("/status/deleted")
         .then()
             .statusCode(404);
+
+        Mockito.verify(eRepository, Mockito.times(0)).delete(Mockito.any(Engagement.class));
     }
     
     @Test
