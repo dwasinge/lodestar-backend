@@ -3,10 +3,10 @@ package com.redhat.labs.lodestar.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
-import org.apache.commons.compress.utils.Sets;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 class EngagementTest {
 
