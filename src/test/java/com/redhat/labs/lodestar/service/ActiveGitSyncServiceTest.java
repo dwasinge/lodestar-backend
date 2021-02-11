@@ -41,7 +41,8 @@ class ActiveGitSyncServiceTest {
     @Test
     void testCheckIfActiveNoExistingRecord() {
 
-        service.onStart(null);
+        service.checkIfActive();
+
         Mockito.verify(repository, Mockito.times(1)).persist(Mockito.any(ActiveSync.class));
 
     }
@@ -52,7 +53,7 @@ class ActiveGitSyncServiceTest {
         ActiveSync record = new ActiveSync(service.getUuid(), LocalDateTime.now());
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record));
 
-        service.onStart(null);
+        service.checkIfActive();
 
         Mockito.verify(repository, Mockito.times(1)).update(Mockito.any(ActiveSync.class));
         Mockito.verify(repository, Mockito.times(0)).delete(Mockito.any(ActiveSync.class));
@@ -66,7 +67,7 @@ class ActiveGitSyncServiceTest {
         ActiveSync record2 = new ActiveSync(UUID.randomUUID(), LocalDateTime.now());
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record1, record2));
 
-        service.onStart(null);
+        service.checkIfActive();
 
         Mockito.verify(repository, Mockito.times(1)).update(Mockito.any(ActiveSync.class));
         Mockito.verify(repository, Mockito.times(1)).delete(Mockito.any(ActiveSync.class));
@@ -79,7 +80,7 @@ class ActiveGitSyncServiceTest {
         ActiveSync record1 = new ActiveSync(UUID.randomUUID(), LocalDateTime.now().minusSeconds(20));
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record1));
 
-        service.onStart(null);
+        service.checkIfActive();
 
         Mockito.verify(repository, Mockito.times(0)).update(Mockito.any(ActiveSync.class));
         Mockito.verify(repository, Mockito.times(0)).delete(Mockito.any(ActiveSync.class));
@@ -93,7 +94,7 @@ class ActiveGitSyncServiceTest {
         ActiveSync record1 = new ActiveSync(UUID.randomUUID(), LocalDateTime.now());
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record1));
 
-        service.onStart(null);
+        service.checkIfActive();
 
         Mockito.verify(repository, Mockito.times(0)).update(Mockito.any(ActiveSync.class));
         Mockito.verify(repository, Mockito.times(0)).delete(Mockito.any(ActiveSync.class));
@@ -117,7 +118,7 @@ class ActiveGitSyncServiceTest {
         ActiveSync record = new ActiveSync(service.getUuid(), LocalDateTime.now());
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record));
 
-        service.onStart(null);
+        service.checkIfActive();
 
         service.repopulateDbIfEmpty();
 
@@ -141,7 +142,7 @@ class ActiveGitSyncServiceTest {
         ActiveSync record = new ActiveSync(service.getUuid(), LocalDateTime.now());
         Mockito.when(repository.listAll(Mockito.any())).thenReturn(Lists.newArrayList(record));
 
-        service.onStart(null);
+        service.checkIfActive();
 
         // call to send event first time
         service.checkForNullUuids();
