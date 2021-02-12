@@ -1,6 +1,8 @@
 package com.redhat.labs.lodestar.utils;
 
 import com.google.common.collect.Lists;
+import com.redhat.labs.lodestar.model.Artifact;
+import com.redhat.labs.lodestar.model.Category;
 import com.redhat.labs.lodestar.model.Commit;
 import com.redhat.labs.lodestar.model.Commit.CommitBuilder;
 import com.redhat.labs.lodestar.model.Engagement;
@@ -20,6 +22,18 @@ public class MockUtils {
         return Engagement.builder().customerName(customerName).projectName(projectName).uuid(uuid).build();
     }
 
+    public static Engagement mockEngagement() {
+
+        Engagement engagement = Engagement.builder().customerName("TestCustomer").projectName("TestProject")
+                .description("Test Description").location("Raleigh, NC").startDate("20170501").endDate("20170708")
+                .archiveDate("20170930").engagementLeadName("Mister Lead").engagementLeadEmail("mister@lead.com")
+                .technicalLeadName("Mister Techlead").technicalLeadEmail("mister@techlead.com")
+                .customerContactName("Customer Contact").customerContactEmail("customer@contact.com").build();
+
+        return engagement;
+
+    }
+
     public static HostingEnvironment mockHostingEnvironment(String environmentName, String ocpSubdomain) {
         return HostingEnvironment.builder().environmentName(environmentName).ocpCloudProviderName("provider1")
                 .ocpClusterSize("small").ocpPersistentStorageSize("none").ocpSubDomain(ocpSubdomain).ocpVersion("4.x.x")
@@ -32,7 +46,8 @@ public class MockUtils {
                 .reset(true).build();
     }
 
-    public static Hook mockHook(String pathWithNamespace, String nameWithNamespace, boolean fileChanged, String fileName) {
+    public static Hook mockHook(String pathWithNamespace, String nameWithNamespace, boolean fileChanged,
+            String fileName) {
         return Hook.builder().project(mockGitLabProject(pathWithNamespace, nameWithNamespace))
                 .commits(Lists.newArrayList(mockCommit(fileName, fileChanged))).build();
     }
@@ -48,9 +63,17 @@ public class MockUtils {
         }
         return builder.build();
     }
-    
+
     public static Status mockStatus(String status) {
         return Status.builder().status(status).build();
+    }
+
+    public static Category mockCategory(String name) {
+        return Category.builder().name(name).build();
+    }
+    
+    public static Artifact mockArtifact(String title, String type, String link) {
+        return Artifact.builder().title(title).type(type).linkAddress(link).build();
     }
 
 }

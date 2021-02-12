@@ -11,9 +11,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import com.redhat.labs.lodestar.model.Version;
 import com.redhat.labs.lodestar.model.status.VersionManifestV1;
 import com.redhat.labs.lodestar.repository.ActiveSyncRepository;
 import com.redhat.labs.lodestar.repository.EngagementRepository;
+import com.redhat.labs.lodestar.rest.client.LodeStarGitLabAPIService;
 import com.redhat.labs.lodestar.rest.client.LodeStarStatusApiClient;
 import com.redhat.labs.lodestar.utils.ResourceLoader;
 
@@ -36,9 +38,17 @@ class VersionResourceTest {
     @InjectMock
     @RestClient
     LodeStarStatusApiClient statusClient;
+    
+    @InjectMock
+    @RestClient
+    LodeStarGitLabAPIService gitApiClient;
 
     @Test
     void testValidResourceVersion() {
+
+        Version v = Version.builder().gitCommit("abcdef").gitTag("v1.1").build();
+        Mockito.when(gitApiClient.getVersion()).thenReturn(v);
+
         given()
         .when()
             .contentType(ContentType.JSON)
@@ -52,6 +62,9 @@ class VersionResourceTest {
     @Test
     void testValidResourceVersion1() {
 
+        Version v = Version.builder().gitCommit("abcdef").gitTag("v1.1").build();
+        Mockito.when(gitApiClient.getVersion()).thenReturn(v);
+        
         given()
         .when()
             .contentType(ContentType.JSON)

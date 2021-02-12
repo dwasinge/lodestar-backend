@@ -6,11 +6,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.wildfly.common.Assert;
 
-import com.redhat.labs.lodestar.utils.EmbeddedMongoTest;
-
 import io.quarkus.test.junit.QuarkusTest;
 
-@EmbeddedMongoTest
 @QuarkusTest
 class NameValidatorTest {
 
