@@ -16,6 +16,7 @@ import com.redhat.labs.lodestar.model.Engagement;
 import com.redhat.labs.lodestar.repository.ActiveSyncRepository;
 import com.redhat.labs.lodestar.repository.EngagementRepository;
 import com.redhat.labs.lodestar.service.EngagementService;
+import com.redhat.labs.lodestar.utils.MockUtils;
 import com.redhat.labs.lodestar.utils.TokenUtils;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -42,7 +43,7 @@ class CustomerSuggestionTest {
 		HashMap<String, Long> timeClaims = new HashMap<>();
         token = TokenUtils.generateTokenString("/JwtClaimsWriter.json", timeClaims);
 		
-		Engagement engagement = new EngagementResourceTest().mockEngagement();
+		Engagement engagement = MockUtils.mockMinimumEngagement(ANSWER, "p1", "1234");
 		engagement.setCustomerName(ANSWER);
 		
 		Mockito.when(eRepository.findCustomerSuggestions(Mockito.anyString())).thenReturn(Lists.newArrayList(engagement));
