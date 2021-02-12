@@ -69,12 +69,6 @@ class EngagementResourceGetTest extends EngagementResourceTestHelper {
 
     }
 
-    /*
-     *  GET ALL SCENARIOS:
-     *  Positive:
-     *   - get, no engagements, empty List
-     *   - get, engagements, List
-     */
     @Test
     void testGetEngagementWithAuthAndRoleSuccessNoEngagements() throws Exception {
 
@@ -174,94 +168,6 @@ class EngagementResourceGetTest extends EngagementResourceTestHelper {
         assertEquals(1, results.length);
 
     }
-    
-    
-
-    
-    // TODO:  This is probably a repository test
-//    @Test
-//    void testGetAllCategoriesAndGetSuggestion() throws Exception {
-//
-//        HashMap<String, Long> timeClaims = new HashMap<>();
-//        String token = TokenUtils.generateTokenString("/JwtClaimsWriter.json", timeClaims);
-//
-//        // create engagements with categories
-//        mockEngagementsWithCategories().stream()
-//            .forEach(e -> {
-//
-//                String body = quarkusJsonb.toJson(e);
-//
-//                given()
-//                .when()
-//                    .auth()
-//                    .oauth2(token)
-//                    .body(body)
-//                    .contentType(ContentType.JSON)
-//                    .post("/engagements")
-//                .then()
-//                    .statusCode(201);
-//                    
-//
-//            });
-//
-//
-//        // get all
-//        Response r =
-//        given()
-//            .auth()
-//            .oauth2(token)
-//            .contentType(ContentType.JSON)
-//        .when()
-//            .get("/engagements/categories");
-//
-//        assertEquals(200, r.getStatusCode());
-//        Category[] results = r.as(Category[].class);
-//        assertEquals(4, results.length);
-//        Map<String, Boolean> resultsMap = validateCategories(results);
-//
-//        assertTrue(resultsMap.containsKey("c1") && 
-//                resultsMap.containsKey("c2") && 
-//                resultsMap.containsKey("c4") && 
-//                resultsMap.containsKey("e5"));
-//
-//        // get suggestions
-//        r =given()
-//            .auth()
-//            .oauth2(token)
-//            .queryParam("suggest", "c")
-//            .contentType(ContentType.JSON)
-//        .when()
-//            .get("/engagements/categories");
-//
-//        assertEquals(200, r.getStatusCode());
-//        results = r.as(Category[].class);
-//        assertEquals(3, results.length);
-//        resultsMap = validateCategories(results);
-//
-//        assertTrue(resultsMap.containsKey("c1") && 
-//                resultsMap.containsKey("c2") && 
-//                resultsMap.containsKey("c4") && 
-//                !resultsMap.containsKey("e5"));
-//
-//        r = given()
-//            .auth()
-//            .oauth2(token)
-//            .queryParam("suggest", "e")
-//            .contentType(ContentType.JSON)
-//        .when()
-//            .get("/engagements/categories");
-//
-//        assertEquals(200, r.getStatusCode());
-//        results = r.as(Category[].class);
-//        assertEquals(1, results.length);
-//        resultsMap = validateCategories(results);
-//
-//        assertTrue(!resultsMap.containsKey("c1") && 
-//                !resultsMap.containsKey("c2") && 
-//                !resultsMap.containsKey("c4") && 
-//                resultsMap.containsKey("e5"));
-//
-//    }
 
     @ParameterizedTest
     @MethodSource("nullEmptyBlankSource")
@@ -305,82 +211,5 @@ class EngagementResourceGetTest extends EngagementResourceTestHelper {
             .body(containsString("a1"));
 
     }
-
-    // TODO:  should be repository test
-//    @Test
-//    void testGetArtifactTypes() throws Exception {
-//
-//        HashMap<String, Long> timeClaims = new HashMap<>();
-//        String token = TokenUtils.generateTokenString("/JwtClaimsWriter.json", timeClaims);
-//
-//        // create engagements with artifacts
-//        mockEngagementWithArtifacts().stream()
-//            .forEach(e -> {
-//
-//                String body = quarkusJsonb.toJson(e);
-//
-//                given()
-//                .when()
-//                    .auth()
-//                    .oauth2(token)
-//                    .body(body)
-//                    .contentType(ContentType.JSON)
-//                    .post("/engagements")
-//                .then()
-//                    .statusCode(201);
-//
-//
-//            });
-//
-//        // get all artifact types
-//        given()
-//            .auth()
-//            .oauth2(token)
-//            .contentType(ContentType.JSON)
-//        .when()
-//            .get("/engagements/artifact/types")
-//        .then()
-//            .statusCode(200)
-//            .body(containsString("demo"))
-//            .body(containsString("report"))
-//            .body(containsString("note"));
-//
-//        // get all artifact types by suggestion
-//        given()
-//            .auth()
-//            .oauth2(token)
-//            .contentType(ContentType.JSON)
-//            .queryParam("suggest", "de")
-//        .when()
-//            .get("/engagements/artifact/types")
-//        .then()
-//            .statusCode(200)
-//            .body(containsString("demo"));
-//
-//        given()
-//            .auth()
-//            .oauth2(token)
-//            .contentType(ContentType.JSON)
-//            .queryParam("suggest", "rE")
-//        .when()
-//            .get("/engagements/artifact/types")
-//        .then()
-//            .statusCode(200)
-//            .body(containsString("report"));
-//
-//        given()
-//            .auth()
-//            .oauth2(token)
-//            .contentType(ContentType.JSON)
-//            .queryParam("suggest", "E")
-//        .when()
-//            .get("/engagements/artifact/types")
-//        .then()
-//            .statusCode(200)
-//            .body(containsString("demo"))
-//            .body(containsString("report"))
-//            .body(containsString("note"));
-//
-//    }
 
 }
