@@ -397,8 +397,4 @@ class EngagementRepositoryTest {
 
     }
 
-    // TODO: find by uuid - no options, include, exclude
-    // TODO: find by customer/project - no options, include, exclude
-    // TODO: find all - no options, include, exclude
-
 }
