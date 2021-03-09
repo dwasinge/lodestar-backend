@@ -2,6 +2,7 @@ package com.redhat.labs.lodestar.health;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
 
 import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
@@ -29,8 +30,10 @@ public class GitApiHealthCheck implements HealthCheck {
         try {
             service.getVersion();
             return HealthCheckResponse.up(NAME);
-        } catch (Exception e) {
-            LOGGER.warn("git api health check failed...{}", e.getMessage());
+        } catch (WebApplicationException e) {
+            int status = e.getResponse().getStatus();
+            String body = e.getResponse().getEntity().toString();
+            LOGGER.warn("git api health check failed...{}:{}:{}", status, body, e.getMessage());
             return HealthCheckResponse.down(NAME);
         }
 
