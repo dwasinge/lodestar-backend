@@ -6,6 +6,7 @@ import static com.mongodb.client.model.Aggregates.match;
 import static com.mongodb.client.model.Aggregates.project;
 import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Aggregates.unwind;
+import static com.mongodb.client.model.Aggregates.limit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.or;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.core.GenericType;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -130,16 +132,37 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * 
      * @return
      */
-    public List<Category> findAllCategoryWithCounts() {
+    public List<Category> findAllCategoryWithCounts(Optional<String> suggestion, Optional<Integer> limit,
+            Optional<String> order) {
 
-        Iterable<Category> iterable = mongoCollection().aggregate(Arrays.asList(unwind("$categories"),
-                addFields(new Field<>("categories.lower_name", new Document(TO_LOWER_QUERY, "$categories.name"))),
-                group("$categories.lower_name", Accumulators.sum(COUNT, 1)),
-                project(new Document("_id", 0).append("name", "$_id").append(COUNT, "$count")),
-                sort(Sorts.descending(COUNT))), Category.class);
+        List<Bson> pipeline = new ArrayList<>();
 
+        pipeline.add(unwind("$categories"));
+
+        if (suggestion.isPresent()) {
+            pipeline.add(match(regex("categories.name", String.format(CASE_INSENSITIVE_QUERY, suggestion.get()))));
+        }
+
+        pipeline.add(addFields(new Field<>("categories.lower_name", new Document(TO_LOWER_QUERY, "$categories.name"))));
+        pipeline.add(group("$categories.lower_name", Accumulators.sum(COUNT, 1)));
+        pipeline.add(project(new Document("_id", 0).append("name", "$_id").append(COUNT, "$count")));
+
+        if (order.isPresent() && "asc".equals(order.get())) {
+            pipeline.add(sort(Sorts.ascending(COUNT)));
+        } else {
+            pipeline.add(sort(Sorts.descending(COUNT)));
+        }
+
+        if (limit.isPresent()) {
+            pipeline.add(limit(limit.get()));
+        }
+
+        return listFromIterable(mongoCollection().aggregate(pipeline, Category.class));
+
+    }
+
+    private <T> List<T> listFromIterable(Iterable<T> iterable) {
         return StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
-
     }
 
     /**

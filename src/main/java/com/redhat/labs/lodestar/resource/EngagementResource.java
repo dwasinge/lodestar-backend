@@ -183,8 +183,9 @@ public class EngagementResource {
     @Operation(summary = "Returns customers list")
     @Counted(name = "engagement-get-all-categories-counted")
     @Timed(name = "engagement-get-all-categories-timer", unit = MetricUnits.MILLISECONDS)
-    public List<Category> getAllCategories(@QueryParam("suggest") String match) {
-        return engagementService.getCategories(match);
+    public List<Category> getAllCategories(@QueryParam("suggest") Optional<String> match,
+            @QueryParam("limit") Optional<Integer> limit, @QueryParam("sort") Optional<String> sort) {
+        return engagementService.getCategories(match, limit, sort);
     }
 
     @GET
