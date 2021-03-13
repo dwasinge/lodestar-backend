@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -580,18 +579,13 @@ public class EngagementService {
     }
 
     /**
-     * Returns a {@link List} of all customer names in the data store that match the
-     * input
+     * Returns a {@link Collection} of customer names in the data store.
      * 
-     * @param subString - A string to match the customer name on. Can be all or
-     *                  part. case-insensitive
-     * @return a {@link List} of all customer names in the data store that match the
-     *         input
+     * @param filterOptions
+     * @return
      */
-    public Collection<String> getSuggestions(String subString) {
-
-        return repository.findCustomerSuggestions(subString).stream().map(Engagement::getCustomerName)
-                .collect(Collectors.toCollection(TreeSet::new));
+    public Collection<String> getSuggestions(ListFilterOptions filterOptions) {
+        return repository.findCustomerSuggestions(filterOptions);
     }
 
     /**

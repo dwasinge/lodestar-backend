@@ -58,10 +58,10 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
 
     private static final List<String> IMMUTABLE_FIELDS = new ArrayList<>(
             Arrays.asList("uuid", "mongoId", "projectId", "creationDetails", "status", "commits", "launch"));
+    private static final String CUSTOMER_NAME = "customerName";
     private static final String COUNT = "count";
     private static final String NAME = "name";
     private static final String TYPE = "type";
-    private static final String CASE_INSENSITIVE_QUERY = "(?i)%s";
     private static final String TO_LOWER_QUERY = "$toLower";
 
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -106,10 +106,28 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param input
      * @return
      */
-    public List<Engagement> findCustomerSuggestions(String input) {
+    @SuppressWarnings("unchecked")
+    public List<String> findCustomerSuggestions(ListFilterOptions options) {
 
-        String queryInput = String.format(CASE_INSENSITIVE_QUERY, input);
-        return find("customerName like ?1", queryInput).list();
+        List<Bson> pipeline = new ArrayList<>();
+
+        // filter if suggestion provided
+        addMatchStageToPipeline(pipeline, options.getSuggestion(), CUSTOMER_NAME, false);
+
+        // create a field that is the lower case name
+        addLowerCaseFieldToPipeline(pipeline, "lower_name", String.format("$%s", CUSTOMER_NAME));
+
+        // group and count by lower case name
+        BsonField[] fields = new BsonField[] { Accumulators.addToSet(CUSTOMER_NAME, "$customerName") };
+        addGroupStageToPipeline(pipeline, "$lower_name", Optional.of(fields));
+
+        // sort
+        addSortStageToPipeline(pipeline, options.getSortOrder(), new String[] { "_id" });
+
+        // paging and limits
+        addPagingAndLimitStagesToPipeline(pipeline, options.getPage(), options.getPerPage(), options.getLimit());
+
+        return listFromIterable(mongoCollection().aggregate(pipeline, Map.class)).stream().map(m-> ((List<String>) m.get(CUSTOMER_NAME)).get(0)).collect(Collectors.toList());
 
     }
 
@@ -134,7 +152,8 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
         addLowerCaseFieldToPipeline(pipeline, "categories.lower_name", "$categories.name");
 
         // group and count by lower case name
-        addGroupAndCountStageToPipeline(pipeline, "$categories.lower_name");
+        BsonField[] fields = new BsonField[] { Accumulators.sum(COUNT, 1) };
+        addGroupStageToPipeline(pipeline, "$categories.lower_name", Optional.of(fields));
 
         // create document with name and count
         addProjectNameAndCountStageToPipeline(pipeline, "name", true);
@@ -179,10 +198,10 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
         pipeline.add(addFields(new Field<>(fieldName, document)));
     }
 
-    private void addGroupAndCountStageToPipeline(List<Bson> pipeline, String groupByField) {
-        BsonField[] fields = new BsonField[] { Accumulators.sum(COUNT, 1) };
-        addGroupStageToPipeline(pipeline, groupByField, Optional.of(fields));
-    }
+//    private void addGroupAndCountStageToPipeline(List<Bson> pipeline, String groupByField) {
+//        BsonField[] fields = new BsonField[] { Accumulators.sum(COUNT, 1) };
+//        addGroupStageToPipeline(pipeline, groupByField, Optional.of(fields));
+//    }
 
     private void addGroupStageToPipeline(List<Bson> pipeline, String fieldName, Optional<BsonField[]> bsonField) {
         if (bsonField.isPresent()) {
