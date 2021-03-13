@@ -28,12 +28,13 @@ import com.redhat.labs.lodestar.model.Commit;
 import com.redhat.labs.lodestar.model.CreationDetails;
 import com.redhat.labs.lodestar.model.Engagement;
 import com.redhat.labs.lodestar.model.EngagementUser;
-import com.redhat.labs.lodestar.model.FilterOptions;
 import com.redhat.labs.lodestar.model.Hook;
 import com.redhat.labs.lodestar.model.HostingEnvironment;
 import com.redhat.labs.lodestar.model.Launch;
 import com.redhat.labs.lodestar.model.Status;
 import com.redhat.labs.lodestar.model.event.EventType;
+import com.redhat.labs.lodestar.model.filter.ListFilterOptions;
+import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
 import com.redhat.labs.lodestar.repository.EngagementRepository;
 import com.redhat.labs.lodestar.rest.client.LodeStarGitLabAPIService;
 
@@ -236,7 +237,8 @@ public class EngagementService {
         }
 
         try {
-            getByCustomerAndProjectName(toUpdate.getCustomerName(), toUpdate.getProjectName(), Optional.empty());
+            getByCustomerAndProjectName(toUpdate.getCustomerName(), toUpdate.getProjectName(),
+                    new SingleFilterOptions());
         } catch (WebApplicationException wae) {
             // return if not found
             return;
@@ -474,7 +476,7 @@ public class EngagementService {
         LOGGER.debug("Hook for {} {}", hook.getCustomerName(), hook.getEngagementName());
 
         // refresh entire engagement if requested
-        if(hook.containsAnyMessage(commitFilteredMessages)) {
+        if (hook.containsAnyMessage(commitFilteredMessages)) {
             LOGGER.debug("hook triggered refresh of engagement for project {}", hook.getProjectId());
             syncGitToDatabase(false, null, String.valueOf(hook.getProjectId()));
             return;
@@ -543,7 +545,7 @@ public class EngagementService {
      * @return
      */
     public Engagement getByCustomerAndProjectName(String customerName, String projectName,
-            Optional<FilterOptions> options) {
+            SingleFilterOptions options) {
         return repository.findByCustomerNameAndProjectName(customerName, projectName, options)
                 .orElseThrow(() -> new WebApplicationException(
                         "no engagement found with customer:project " + customerName + ":" + projectName,
@@ -557,7 +559,7 @@ public class EngagementService {
      * @param uuid
      * @return
      */
-    public Engagement getByUuid(String uuid, Optional<FilterOptions> options) {
+    public Engagement getByUuid(String uuid, SingleFilterOptions options) {
         return repository.findByUuid(uuid, options).orElseThrow(
                 () -> new WebApplicationException("no engagement found with id " + uuid, HttpStatus.SC_NOT_FOUND));
     }
@@ -567,7 +569,7 @@ public class EngagementService {
      * 
      * @return
      */
-    public List<Engagement> getAll(String categories, Optional<FilterOptions> filterOptions) {
+    public List<Engagement> getAll(String categories, SingleFilterOptions filterOptions) {
 
         if (null == categories || categories.isBlank()) {
             return repository.findAll(filterOptions);
@@ -609,7 +611,7 @@ public class EngagementService {
      * @param projectName
      */
     public void deleteByCustomerAndProjectName(String customerName, String projectName) {
-        repository.delete(getByCustomerAndProjectName(customerName, projectName, Optional.empty()));
+        repository.delete(getByCustomerAndProjectName(customerName, projectName, new SingleFilterOptions()));
     }
 
     /**
@@ -619,7 +621,7 @@ public class EngagementService {
      * @param uuid
      */
     public void deleteByUuid(String uuid) {
-        repository.delete(getByUuid(uuid, Optional.empty()));
+        repository.delete(getByUuid(uuid, new SingleFilterOptions()));
     }
 
     /**
@@ -631,7 +633,7 @@ public class EngagementService {
     public void deleteEngagement(String uuid) {
 
         // get engagement by uuid
-        Engagement engagement = getByUuid(uuid, Optional.empty());
+        Engagement engagement = getByUuid(uuid, new SingleFilterOptions());
 
         // throw 400 if already launched
         if (isLaunched(engagement)) {
@@ -648,40 +650,38 @@ public class EngagementService {
     }
 
     /**
-     * Returns a {@link List} of {@link Category} that match the provided
-     * {@link String}. Returns all {@link Category} if no match {@link String}
-     * provided.
+     * Returns a {@link List} of {@link Category} that based on the provided
+     * optionals.
      * 
-     * @param optionalMatch
+     * If match is provided, the search will filter based on case insensitive search
+     * of the match {@link String}.
+     * 
+     * If limit is provided, the response list will be limited to the provided size.
+     * 
+     * If sort is provided, the list will be sorted according to the value. Default
+     * is descending.
+     * 
+     * If no options are provided, all {@link Category} will be returned and sorted
+     * in descending order.
+     * 
+     * @param match
+     * @param limit
+     * @param sort
      * @return
      */
-    public List<Category> getCategories(Optional<String> match, Optional<Integer> limit, Optional<String> sort) {
-
-        return repository.findAllCategoryWithCounts(match, limit, sort);
-
-//        if (match.isEmpty() || match.get().isBlank()) {
-//            return repository.findAllCategoryWithCounts(limit, sort);
-//        }
-//
-//        return repository.findCategorySuggestions(match.get());
-
+    public List<Category> getCategories(ListFilterOptions options) {
+        return repository.findCategories(options);
     }
 
     /**
      * Returns a {@link List} of Artifact Types as {@link String} that match the
      * provided input {@link String}. Otherwise, all Types are returned.
      * 
-     * @param match
+     * @param filterOptions
      * @return
      */
-    public List<String> getArtifactTypes(String match) {
-
-        if (null == match || match.isBlank()) {
-            return repository.findAllArtifactTypes();
-        }
-
-        return repository.findArtifactTypeSuggestions(match);
-
+    public List<String> getArtifactTypes(ListFilterOptions filterOptions) {
+        return repository.findArtifactTypes(filterOptions);
     }
 
     /**
@@ -789,7 +789,7 @@ public class EngagementService {
         if (null != uuid) {
 
             // find in database or throw 404
-            Engagement engagement = getByUuid(uuid, Optional.empty());
+            Engagement engagement = getByUuid(uuid, new SingleFilterOptions());
 
             // send event for processing
             eventBus.sendAndForget(EventType.DELETE_AND_RELOAD_ENGAGEMENT_EVENT_ADDRESS,

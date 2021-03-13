@@ -8,12 +8,14 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import com.redhat.labs.lodestar.model.filter.ListFilterOptions;
+
 class FilterOptionsTest {
 
     @Test
     void testGetIncludeListNull() {
 
-        FilterOptions options = FilterOptions.builder().include(null).build();
+        ListFilterOptions options = ListFilterOptions.builder().include(null).build();
         assertTrue(options.getIncludeList().isEmpty());
 
     }
@@ -21,7 +23,7 @@ class FilterOptionsTest {
     @Test
     void testGetIncludeListNotNull() {
 
-        FilterOptions options = FilterOptions.builder().include("value,another_value").build();
+        ListFilterOptions options = ListFilterOptions.builder().include("value,another_value").build();
         Optional<Set<String>> optional = options.getIncludeList();
         assertTrue(optional.isPresent());
         Set<String> set = optional.get();
@@ -34,7 +36,7 @@ class FilterOptionsTest {
     @Test
     void testGetIncludeListFilterExcludes() {
         
-        FilterOptions options = FilterOptions.builder().include("value,another_value").exclude("another_value").build();
+        ListFilterOptions options = ListFilterOptions.builder().include("value,another_value").exclude("another_value").build();
         Optional<Set<String>> optional = options.getIncludeList();
         assertTrue(optional.isPresent());
         Set<String> set = optional.get();
@@ -47,7 +49,7 @@ class FilterOptionsTest {
     @Test
     void testGetExcludeListNull() {
 
-        FilterOptions options = FilterOptions.builder().exclude(null).build();
+        ListFilterOptions options = ListFilterOptions.builder().exclude(null).build();
         assertTrue(options.getIncludeList().isEmpty());
 
     }
@@ -55,7 +57,7 @@ class FilterOptionsTest {
     @Test
     void testGetExcludeListNotNull() {
 
-        FilterOptions options = FilterOptions.builder().exclude("value,another_value").build();
+        ListFilterOptions options = ListFilterOptions.builder().exclude("value,another_value").build();
         Optional<Set<String>> optional = options.getExcludeList();
         assertTrue(optional.isPresent());
         Set<String> set = optional.get();

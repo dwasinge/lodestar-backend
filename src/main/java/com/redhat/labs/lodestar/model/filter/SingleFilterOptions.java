@@ -1,4 +1,4 @@
-package com.redhat.labs.lodestar.model;
+package com.redhat.labs.lodestar.model.filter;
 
 import java.util.HashSet;
 import java.util.List;
@@ -7,19 +7,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import javax.ws.rs.QueryParam;
 
-@Builder
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
 @NoArgsConstructor
 @AllArgsConstructor
-public class FilterOptions {
+public class SingleFilterOptions {
 
-    @Setter
+    @Parameter(name = "include", required = false, description = "comma separated list of field names to include in response")
+    @QueryParam("include")
     private String include;
-    @Setter
+
+    @Parameter(name = "exclude", required = false, description = "comma separated list of field names to exclude in response")
+    @QueryParam("exclude")
     private String exclude;
 
     public Optional<Set<String>> getIncludeList() {

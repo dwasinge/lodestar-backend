@@ -1,69 +1,53 @@
-package com.redhat.labs.lodestar.resource;
+package com.redhat.labs.lodestar.resource.engagement;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.HttpStatus;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.eclipse.microprofile.metrics.annotation.Timed;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
-import org.eclipse.microprofile.openapi.annotations.security.SecurityScheme;
 
-import com.redhat.labs.lodestar.model.Category;
 import com.redhat.labs.lodestar.model.Engagement;
-import com.redhat.labs.lodestar.model.FilterOptions;
-import com.redhat.labs.lodestar.service.EngagementService;
+import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
+import com.redhat.labs.lodestar.resource.BackendResource;
 
-@RequestScoped
-@Path("/engagements")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
-@SecurityScheme(securitySchemeName = "jwt", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
-public class EngagementResource {
+//@RequestScoped
+//@Path("/engagements")
+//@Produces(MediaType.APPLICATION_JSON)
+//@Consumes(MediaType.APPLICATION_JSON)
+//@SecurityScheme(securitySchemeName = "jwt", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
+public class EngagementResource extends BackendResource {
 
-    private static final String NAME_CLAIM = "name";
-    private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
-    private static final String USER_EMAIL_CLAIM = "email";
-
-    public static final String DEFAULT_USERNAME = "lodestar-user";
-    public static final String DEFAULT_EMAIL = "lodestar-email";
-
-    public static final String ACCESS_CONTROL_EXPOSE_HEADER = "Access-Control-Expose-Headers";
-    public static final String LAST_UPDATE_HEADER = "last-update";
-
-    @Inject
-    JsonWebToken jwt;
-
-    @Inject
-    EngagementService engagementService;
+//    private static final String NAME_CLAIM = "name";
+//    private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
+//    private static final String USER_EMAIL_CLAIM = "email";
+//
+//    public static final String DEFAULT_USERNAME = "lodestar-user";
+//    public static final String DEFAULT_EMAIL = "lodestar-email";
+//
+//    public static final String ACCESS_CONTROL_EXPOSE_HEADER = "Access-Control-Expose-Headers";
+//    public static final String LAST_UPDATE_HEADER = "last-update";
+//
+//    @Inject
+//    JsonWebToken jwt;
+//
+//    @Inject
+//    EngagementService engagementService;
 
     @POST
     @SecurityRequirement(name = "jwt", scopes = {})
@@ -80,7 +64,7 @@ public class EngagementResource {
         engagement.setLastUpdateByEmail(getUserEmailFromToken());
 
         // create the resource
-        Engagement created = engagementService.create(engagement);
+        Engagement created = getEngagementService().create(engagement);
 
         // build location response
         UriBuilder builder = uriInfo.getAbsolutePathBuilder();
@@ -106,28 +90,28 @@ public class EngagementResource {
         engagement.setLastUpdateByName(getUsernameFromToken());
         engagement.setLastUpdateByEmail(getUserEmailFromToken());
 
-        return engagementService.update(engagement);
+        return getEngagementService().update(engagement);
 
     }
 
-    @GET
-    @SecurityRequirement(name = "jwt", scopes = {})
-    @Path("/customers/{customerName}/projects/{projectName}")
-    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
-            @APIResponse(responseCode = "404", description = "Engagement resource with customer and project names does not exist"),
-            @APIResponse(responseCode = "200", description = "Engagement resource found and returned") })
-    @Operation(summary = "Returns the engagement resource for the given customer and project names.")
-    @Counted(name = "engagement-get-counted")
-    @Timed(name = "enagement-get-timer", unit = MetricUnits.MILLISECONDS)
-    public Response get(@PathParam("customerName") String customerName, @PathParam("projectName") String projectName,
-            @QueryParam("include") String include, @QueryParam("exclude") String exclude) {
-
-        Engagement engagement = engagementService.getByCustomerAndProjectName(customerName, projectName,
-                getFilterOptions(include, exclude));
-        return Response.ok(engagement).header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
-                .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
-
-    }
+//    @GET
+//    @SecurityRequirement(name = "jwt", scopes = {})
+//    @Path("/customers/{customerName}/projects/{projectName}")
+//    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
+//            @APIResponse(responseCode = "404", description = "Engagement resource with customer and project names does not exist"),
+//            @APIResponse(responseCode = "200", description = "Engagement resource found and returned") })
+//    @Operation(summary = "Returns the engagement resource for the given customer and project names.")
+//    @Counted(name = "engagement-get-counted")
+//    @Timed(name = "enagement-get-timer", unit = MetricUnits.MILLISECONDS)
+//    public Response get(@PathParam("customerName") String customerName, @PathParam("projectName") String projectName,
+//            @QueryParam("include") String include, @QueryParam("exclude") String exclude) {
+//
+//        Engagement engagement = getEngagementService().getByCustomerAndProjectName(customerName, projectName,
+//                getFilterOptions(include, exclude));
+//        return Response.ok(engagement).header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
+//                .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
+//
+//    }
 
     @HEAD
     @Deprecated
@@ -141,64 +125,64 @@ public class EngagementResource {
     @Timed(name = "engagement-head-dep-timer", unit = MetricUnits.MILLISECONDS)
     public Response head(@PathParam("customerName") String customerName, @PathParam("projectName") String projectName) {
 
-        Engagement engagement = engagementService.getByCustomerAndProjectName(customerName, projectName,
-                Optional.empty());
+        Engagement engagement = getEngagementService().getByCustomerAndProjectName(customerName, projectName,
+                new SingleFilterOptions());
         return Response.ok().header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
                 .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
 
     }
 
-    @GET
-    @SecurityRequirement(name = "jwt", scopes = {})
-    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
-            @APIResponse(responseCode = "200", description = "A list or empty list of engagement resources returned") })
-    @Operation(summary = "Returns all engagement resources from the database.  Can be empty list if none found.")
-    @Counted(name = "engagement-get-all-counted")
-    @Timed(name = "engagement-get-all-timer", unit = MetricUnits.MILLISECONDS)
-    public List<Engagement> getAll(@QueryParam("categories") String categories, @QueryParam("include") String include,
-            @QueryParam("exclude") String exclude) {
-        return engagementService.getAll(categories, getFilterOptions(include, exclude));
-    }
-
-    @GET
-    @Path("/customers/suggest")
-    @SecurityRequirement(name = "jwt", scopes = {})
-    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
-            @APIResponse(responseCode = "200", description = "Customer data has been returned.") })
-    @Operation(summary = "Returns customers list")
-    @Counted(name = "engagement-suggest-url-counted")
-    @Timed(name = "engagement-suggest-url-timer", unit = MetricUnits.MILLISECONDS)
-    public Response findCustomers(@NotBlank @QueryParam("suggest") String match) {
-
-        Collection<String> customerSuggestions = engagementService.getSuggestions(match);
-
-        return Response.ok(customerSuggestions).build();
-    }
-
-    @GET
-    @Path("/categories")
-    @SecurityRequirement(name = "jwt", scopes = {})
-    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
-            @APIResponse(responseCode = "200", description = "Customer data has been returned.") })
-    @Operation(summary = "Returns customers list")
-    @Counted(name = "engagement-get-all-categories-counted")
-    @Timed(name = "engagement-get-all-categories-timer", unit = MetricUnits.MILLISECONDS)
-    public List<Category> getAllCategories(@QueryParam("suggest") Optional<String> match,
-            @QueryParam("limit") Optional<Integer> limit, @QueryParam("sort") Optional<String> sort) {
-        return engagementService.getCategories(match, limit, sort);
-    }
-
-    @GET
-    @Path("/artifact/types")
-    @SecurityRequirement(name = "jwt", scopes = {})
-    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
-            @APIResponse(responseCode = "200", description = "Artifact types have been returned.") })
-    @Operation(summary = "Returns artifact type list")
-    @Counted(name = "engagement-get-all-artifacts-counted")
-    @Timed(name = "engagement-get-all-artifacts-timer", unit = MetricUnits.MILLISECONDS)
-    public List<String> getArtifactTypes(@QueryParam("suggest") String match) {
-        return engagementService.getArtifactTypes(match);
-    }
+//    @GET
+//    @SecurityRequirement(name = "jwt", scopes = {})
+//    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
+//            @APIResponse(responseCode = "200", description = "A list or empty list of engagement resources returned") })
+//    @Operation(summary = "Returns all engagement resources from the database.  Can be empty list if none found.")
+//    @Counted(name = "engagement-get-all-counted")
+//    @Timed(name = "engagement-get-all-timer", unit = MetricUnits.MILLISECONDS)
+//    public List<Engagement> getAll(@QueryParam("categories") String categories, @QueryParam("include") String include,
+//            @QueryParam("exclude") String exclude) {
+//        return getEngagementService().getAll(categories, getFilterOptions(include, exclude));
+//    }
+//
+//    @GET
+//    @Path("/customers/suggest")
+//    @SecurityRequirement(name = "jwt", scopes = {})
+//    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
+//            @APIResponse(responseCode = "200", description = "Customer data has been returned.") })
+//    @Operation(summary = "Returns customers list")
+//    @Counted(name = "engagement-suggest-url-counted")
+//    @Timed(name = "engagement-suggest-url-timer", unit = MetricUnits.MILLISECONDS)
+//    public Response findCustomers(@NotBlank @QueryParam("suggest") String match) {
+//
+//        Collection<String> customerSuggestions = getEngagementService().getSuggestions(match);
+//
+//        return Response.ok(customerSuggestions).build();
+//    }
+//
+//    @GET
+//    @Path("/categories")
+//    @SecurityRequirement(name = "jwt", scopes = {})
+//    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
+//            @APIResponse(responseCode = "200", description = "Customer data has been returned.") })
+//    @Operation(summary = "Returns customers list")
+//    @Counted(name = "engagement-get-all-categories-counted")
+//    @Timed(name = "engagement-get-all-categories-timer", unit = MetricUnits.MILLISECONDS)
+//    public List<Category> getAllCategories(@QueryParam("suggest") Optional<String> match,
+//            @QueryParam("limit") Optional<Integer> limit, @QueryParam("sort") Optional<String> sort) {
+//        return getEngagementService().getCategories(match, limit, sort);
+//    }
+//
+//    @GET
+//    @Path("/artifact/types")
+//    @SecurityRequirement(name = "jwt", scopes = {})
+//    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
+//            @APIResponse(responseCode = "200", description = "Artifact types have been returned.") })
+//    @Operation(summary = "Returns artifact type list")
+//    @Counted(name = "engagement-get-all-artifacts-counted")
+//    @Timed(name = "engagement-get-all-artifacts-timer", unit = MetricUnits.MILLISECONDS)
+//    public List<String> getArtifactTypes(@QueryParam("suggest") String match) {
+//        return getEngagementService().getArtifactTypes(match);
+//    }
 
     @PUT
     @Path("/launch")
@@ -214,7 +198,7 @@ public class EngagementResource {
         engagement.setLastUpdateByName(getUsernameFromToken());
         engagement.setLastUpdateByEmail(getUserEmailFromToken());
 
-        engagementService.launch(engagement);
+        getEngagementService().launch(engagement);
         return engagement;
 
     }
@@ -232,7 +216,7 @@ public class EngagementResource {
             @QueryParam("projectId") String projectId) {
 
         // start the sync process
-        engagementService.syncGitToDatabase(Boolean.TRUE.equals(purgeFirst), uuid, projectId);
+        getEngagementService().syncGitToDatabase(Boolean.TRUE.equals(purgeFirst), uuid, projectId);
         return Response.accepted().build();
 
     }
@@ -247,28 +231,28 @@ public class EngagementResource {
     @Timed(name = "engagement-put-uuid-timer", unit = MetricUnits.MILLISECONDS)
     public Response setUuids() {
 
-        engagementService.setNullUuids();
+        getEngagementService().setNullUuids();
         return Response.ok().build();
 
     }
 
-    @GET
-    @SecurityRequirement(name = "jwt", scopes = {})
-    @Path("/{id}")
-    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
-            @APIResponse(responseCode = "404", description = "Engagement resource with id does not exist"),
-            @APIResponse(responseCode = "200", description = "Engagement resource found and returned") })
-    @Operation(summary = "Returns the engagement resource for the given id.")
-    @Counted(name = "engagement-get-by-uuid-counted")
-    @Timed(name = "engagement-get-by-uuid-timer", unit = MetricUnits.MILLISECONDS)
-    public Response get(@PathParam("id") String uuid, @QueryParam("include") String include,
-            @QueryParam("exclude") String exclude) {
-
-        Engagement engagement = engagementService.getByUuid(uuid, getFilterOptions(include, exclude));
-        return Response.ok(engagement).header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
-                .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
-
-    }
+//    @GET
+//    @SecurityRequirement(name = "jwt", scopes = {})
+//    @Path("/{id}")
+//    @APIResponses(value = { @APIResponse(responseCode = "401", description = "Missing or Invalid JWT"),
+//            @APIResponse(responseCode = "404", description = "Engagement resource with id does not exist"),
+//            @APIResponse(responseCode = "200", description = "Engagement resource found and returned") })
+//    @Operation(summary = "Returns the engagement resource for the given id.")
+//    @Counted(name = "engagement-get-by-uuid-counted")
+//    @Timed(name = "engagement-get-by-uuid-timer", unit = MetricUnits.MILLISECONDS)
+//    public Response get(@PathParam("id") String uuid, @QueryParam("include") String include,
+//            @QueryParam("exclude") String exclude) {
+//
+//        Engagement engagement = getEngagementService().getByUuid(uuid, getFilterOptions(include, exclude));
+//        return Response.ok(engagement).header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
+//                .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
+//
+//    }
 
     @HEAD
     @SecurityRequirement(name = "jwt", scopes = {})
@@ -281,7 +265,7 @@ public class EngagementResource {
     @Timed(name = "engagement-head-by-uuid-timer", unit = MetricUnits.MILLISECONDS)
     public Response head(@PathParam("id") String uuid) {
 
-        Engagement engagement = engagementService.getByUuid(uuid, Optional.empty());
+        Engagement engagement = getEngagementService().getByUuid(uuid, new SingleFilterOptions());
         return Response.ok().header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
                 .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
 
@@ -302,7 +286,7 @@ public class EngagementResource {
         engagement.setLastUpdateByName(getUsernameFromToken());
         engagement.setLastUpdateByEmail(getUserEmailFromToken());
 
-        return engagementService.update(engagement);
+        return getEngagementService().update(engagement);
 
     }
 
@@ -318,7 +302,7 @@ public class EngagementResource {
     @Timed(name = "engagement-delete-by-uuid-timer", unit = MetricUnits.MILLISECONDS)
     public Response delete(@PathParam("id") String uuid) {
 
-        engagementService.deleteEngagement(uuid);
+        getEngagementService().deleteEngagement(uuid);
         return Response.accepted().build();
 
     }
@@ -332,80 +316,9 @@ public class EngagementResource {
     @Counted(name = "engagement-head-unq-subdomain-counted")
     @Timed(name = "engagement-head-unq-subdomain-timer", unit = MetricUnits.MILLISECONDS)
     public Response uniqueSubdomain(@PathParam("subdomain") String subdomain) {
-        int status = engagementService.getBySubdomain(subdomain).isPresent() ? HttpStatus.SC_CONFLICT
+        int status = getEngagementService().getBySubdomain(subdomain).isPresent() ? HttpStatus.SC_CONFLICT
                 : HttpStatus.SC_OK;
         return Response.status(status).build();
-    }
-
-    private String getUsernameFromToken() {
-
-        // Use `name` claim first
-        Optional<String> optional = claimIsValid(NAME_CLAIM);
-
-        if (optional.isPresent()) {
-            return optional.get();
-        }
-
-        // use `preferred_username` claim if `name` not valid
-        optional = claimIsValid(PREFERRED_USERNAME_CLAIM);
-
-        if (optional.isPresent()) {
-            return optional.get();
-        }
-
-        // use `email` if username not valid
-        return getUserEmailFromToken();
-
-    }
-
-    private String getUserEmailFromToken() {
-
-        Optional<String> optional = claimIsValid(USER_EMAIL_CLAIM);
-
-        if (optional.isPresent()) {
-            return optional.get();
-        }
-
-        return DEFAULT_EMAIL;
-
-    }
-
-    private Optional<String> claimIsValid(String claimName) {
-
-        // get claim by name
-        Optional<String> optional = jwt.claim(claimName);
-
-        // return if no value found
-        if (!optional.isPresent()) {
-            return optional;
-        }
-
-        String value = optional.get();
-
-        // return empty optional if value is whitespace
-        if (value.trim().equals("")) {
-            return Optional.empty();
-        }
-
-        // valid return
-        return optional;
-
-    }
-
-    private Optional<FilterOptions> getFilterOptions(String include, String exclude) {
-
-        // throw bad request if both supplied
-        if (null != include && null != exclude) {
-            throw new WebApplicationException("cannot use both include and exclude params", HttpStatus.SC_BAD_REQUEST);
-        }
-
-        // create options if either exist
-        if (null != include || null != exclude) {
-            return Optional.of(FilterOptions.builder().include(include).exclude(exclude).build());
-        }
-
-        return Optional.empty();
-
     }
 
 }

@@ -2,11 +2,12 @@ package com.redhat.labs.lodestar.repository;
 
 import static com.mongodb.client.model.Aggregates.addFields;
 import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.limit;
 import static com.mongodb.client.model.Aggregates.match;
 import static com.mongodb.client.model.Aggregates.project;
+import static com.mongodb.client.model.Aggregates.skip;
 import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Aggregates.unwind;
-import static com.mongodb.client.model.Aggregates.limit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.or;
@@ -28,7 +29,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.core.GenericType;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -37,6 +37,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.Field;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
@@ -45,8 +46,10 @@ import com.redhat.labs.lodestar.model.Artifact;
 import com.redhat.labs.lodestar.model.Category;
 import com.redhat.labs.lodestar.model.Commit;
 import com.redhat.labs.lodestar.model.Engagement;
-import com.redhat.labs.lodestar.model.FilterOptions;
 import com.redhat.labs.lodestar.model.Status;
+import com.redhat.labs.lodestar.model.filter.ListFilterOptions;
+import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
+import com.redhat.labs.lodestar.model.filter.SortOrder;
 
 import io.quarkus.mongodb.panache.PanacheMongoRepository;
 
@@ -56,6 +59,8 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
     private static final List<String> IMMUTABLE_FIELDS = new ArrayList<>(
             Arrays.asList("uuid", "mongoId", "projectId", "creationDetails", "status", "commits", "launch"));
     private static final String COUNT = "count";
+    private static final String NAME = "name";
+    private static final String TYPE = "type";
     private static final String CASE_INSENSITIVE_QUERY = "(?i)%s";
     private static final String TO_LOWER_QUERY = "$toLower";
 
@@ -109,55 +114,114 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
     }
 
     /**
-     * A case insensitive string to match against category names.
-     * 
-     * @param input
-     * @return
-     */
-    public List<Category> findCategorySuggestions(String input) {
-
-        Iterable<Category> iterable = mongoCollection().aggregate(Arrays.asList(unwind("$categories"),
-                match(regex("categories.name", String.format(CASE_INSENSITIVE_QUERY, input))),
-                addFields(new Field<>("categories.lower_name", new Document(TO_LOWER_QUERY, "$categories.name"))),
-                group("$categories.lower_name", Accumulators.sum(COUNT, 1)),
-                project(new Document("_id", 0).append("name", "$_id").append(COUNT, "$count")),
-                sort(Sorts.descending(COUNT))), Category.class);
-
-        return StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
-
-    }
-
-    /**
-     * Returns all unique {@link Category} with associated counts.
+     * Returns a {@link List} of {@link Category} matching the
+     * {@link ListFilterOptions}. If not options provided, all {@link Category} are
+     * returned.
      * 
      * @return
      */
-    public List<Category> findAllCategoryWithCounts(Optional<String> suggestion, Optional<Integer> limit,
-            Optional<String> order) {
+    public List<Category> findCategories(ListFilterOptions options) {
 
         List<Bson> pipeline = new ArrayList<>();
 
-        pipeline.add(unwind("$categories"));
+        // flatten to just categories
+        addUnwindStageToPipeline(pipeline, "$categories");
 
-        if (suggestion.isPresent()) {
-            pipeline.add(match(regex("categories.name", String.format(CASE_INSENSITIVE_QUERY, suggestion.get()))));
-        }
+        // filter if suggestion provided
+        addMatchStageToPipeline(pipeline, options.getSuggestion(), "categories.name", false);
 
-        pipeline.add(addFields(new Field<>("categories.lower_name", new Document(TO_LOWER_QUERY, "$categories.name"))));
-        pipeline.add(group("$categories.lower_name", Accumulators.sum(COUNT, 1)));
-        pipeline.add(project(new Document("_id", 0).append("name", "$_id").append(COUNT, "$count")));
+        // create a field that is the lower case name
+        addLowerCaseFieldToPipeline(pipeline, "categories.lower_name", "$categories.name");
 
-        if (order.isPresent() && "asc".equals(order.get())) {
-            pipeline.add(sort(Sorts.ascending(COUNT)));
-        } else {
-            pipeline.add(sort(Sorts.descending(COUNT)));
-        }
+        // group and count by lower case name
+        addGroupAndCountStageToPipeline(pipeline, "$categories.lower_name");
 
-        if (limit.isPresent()) {
-            pipeline.add(limit(limit.get()));
-        }
+        // create document with name and count
+        addProjectNameAndCountStageToPipeline(pipeline, "name", true);
+
+        // sort
+        addSortStageToPipeline(pipeline, options.getSortOrder(), new String[] { COUNT, NAME });
+
+        // paging and limits
+        addPagingAndLimitStagesToPipeline(pipeline, options.getPage(), options.getPerPage(), options.getLimit());
 
         return listFromIterable(mongoCollection().aggregate(pipeline, Category.class));
+
+    }
+
+    private void addUnwindStageToPipeline(List<Bson> pipeline, String fieldName) {
+        pipeline.add(unwind(fieldName));
+    }
+
+    private void addMatchStageToPipeline(List<Bson> pipeline, Optional<String> suggestion, String fieldName,
+            boolean caseSensitive) {
+
+        if (suggestion.isPresent()) {
+
+            if (caseSensitive) {
+                pipeline.add(match(regex(fieldName, suggestion.get())));
+            } else {
+                pipeline.add(match(regex(fieldName, suggestion.get(), "i")));
+            }
+
+        }
+
+    }
+
+    private void addLowerCaseFieldToPipeline(List<Bson> pipeline, String tofieldName, String fromFieldName) {
+
+        Document toLowerDocument = new Document(TO_LOWER_QUERY, fromFieldName);
+        addFieldStageToPipeline(pipeline, tofieldName, toLowerDocument);
+
+    }
+
+    private void addFieldStageToPipeline(List<Bson> pipeline, String fieldName, Document document) {
+        pipeline.add(addFields(new Field<>(fieldName, document)));
+    }
+
+    private void addGroupAndCountStageToPipeline(List<Bson> pipeline, String groupByField) {
+        BsonField[] fields = new BsonField[] { Accumulators.sum(COUNT, 1) };
+        addGroupStageToPipeline(pipeline, groupByField, Optional.of(fields));
+    }
+
+    private void addGroupStageToPipeline(List<Bson> pipeline, String fieldName, Optional<BsonField[]> bsonField) {
+        if (bsonField.isPresent()) {
+            pipeline.add(group(fieldName, bsonField.get()));
+        } else {
+            pipeline.add(group(fieldName));
+        }
+    }
+
+    private void addProjectNameAndCountStageToPipeline(List<Bson> pipeline, String nameField, boolean addCount) {
+        if (addCount) {
+            pipeline.add(project(new Document("_id", 0).append(nameField, "$_id").append(COUNT, "$count")));
+        } else {
+            pipeline.add(project(new Document().append(nameField, "$_id")));
+        }
+    }
+
+    private void addSortStageToPipeline(List<Bson> pipeline, Optional<SortOrder> sortOrder, String[] sortFields) {
+
+        if (sortOrder.isPresent() && "asc".equalsIgnoreCase(sortOrder.get().name())) {
+            pipeline.add(sort(Sorts.ascending(sortFields)));
+        } else {
+            pipeline.add(sort(Sorts.descending(sortFields)));
+        }
+
+    }
+
+    private void addPagingAndLimitStagesToPipeline(List<Bson> pipeline, Optional<Integer> page,
+            Optional<Integer> perPage, Optional<Integer> limit) {
+
+        if (page.isPresent()) {
+            Integer pageNumber = page.get();
+            Integer pageSize = perPage.isPresent() ? perPage.get() : 20;
+            pipeline.add(skip(pageSize * (pageNumber - 1)));
+            pipeline.add(limit(pageSize));
+
+        } else if (limit.isPresent()) {
+            pipeline.add(limit(limit.get()));
+        }
 
     }
 
@@ -171,16 +235,33 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param input
      * @return
      */
-    public List<String> findArtifactTypeSuggestions(String input) {
+    public List<String> findArtifactTypes(ListFilterOptions options) {
 
-        // get all types that match the input string
-        Iterable<Artifact> iterable = mongoCollection().aggregate(Arrays.asList(unwind("$artifacts"),
-                match(regex("artifacts.type", String.format(CASE_INSENSITIVE_QUERY, input))),
-                addFields(new Field<>("artifacts.lower_type", new Document(TO_LOWER_QUERY, "$artifacts.type"))),
-                group("$artifacts.lower_type"), project(new Document().append("type", "$_id")),
-                sort(Sorts.ascending("type"))), Artifact.class);
+        List<Bson> pipeline = new ArrayList<>();
 
-        return StreamSupport.stream(iterable.spliterator(), false).map(Artifact::getType).collect(Collectors.toList());
+        // flatten to just categories
+        addUnwindStageToPipeline(pipeline, "$artifacts");
+
+        // filter if suggestion provided
+        addMatchStageToPipeline(pipeline, options.getSuggestion(), "artifacts.type", false);
+
+        // create a field that is the lower case name
+        addLowerCaseFieldToPipeline(pipeline, "artifacts.lower_type", "$artifacts.type");
+
+        // group by lower case name
+        addGroupStageToPipeline(pipeline, "$artifacts.lower_type", Optional.empty());
+
+        // project
+        addProjectNameAndCountStageToPipeline(pipeline, TYPE, false);
+
+        // sort
+        addSortStageToPipeline(pipeline, options.getSortOrder(), new String[] { TYPE });
+
+        // paging and limits
+        addPagingAndLimitStagesToPipeline(pipeline, options.getPage(), options.getPerPage(), options.getLimit());
+
+        return listFromIterable(mongoCollection().aggregate(pipeline, Artifact.class)).stream().map(Artifact::getType)
+                .collect(Collectors.toList());
 
     }
 
@@ -189,17 +270,17 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * 
      * @return
      */
-    public List<String> findAllArtifactTypes() {
-
-        // get all unique artifact types
-        Iterable<Artifact> iterable = mongoCollection().aggregate(Arrays.asList(unwind("$artifacts"),
-                addFields(new Field<>("artifacts.lower_type", new Document(TO_LOWER_QUERY, "$artifacts.type"))),
-                group("$artifacts.lower_type"), project(new Document().append("type", "$_id")),
-                sort(Sorts.ascending("type"))), Artifact.class);
-
-        return StreamSupport.stream(iterable.spliterator(), false).map(Artifact::getType).collect(Collectors.toList());
-
-    }
+//    public List<String> findAllArtifactTypes() {
+//
+//        // get all unique artifact types
+//        Iterable<Artifact> iterable = mongoCollection().aggregate(Arrays.asList(unwind("$artifacts"),
+//                addFields(new Field<>("artifacts.lower_type", new Document(TO_LOWER_QUERY, "$artifacts.type"))),
+//                group("$artifacts.lower_type"), project(new Document().append("type", "$_id")),
+//                sort(Sorts.ascending("type"))), Artifact.class);
+//
+//        return StreamSupport.stream(iterable.spliterator(), false).map(Artifact::getType).collect(Collectors.toList());
+//
+//    }
 
     /**
      * Returns an {@link Optional} containing the updated {@link Engagement} where
@@ -342,7 +423,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    public List<Engagement> findByCategories(String categories, Optional<FilterOptions> filterOptions) {
+    public List<Engagement> findByCategories(String categories, SingleFilterOptions filterOptions) {
 
         // split the list
         Set<String> categorySet = Stream.of(categories.split(",")).collect(Collectors.toSet());
@@ -365,7 +446,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @return
      */
     public Optional<Engagement> findByUuid(String uuid) {
-        return findByUuid(uuid, Optional.empty());
+        return findByUuid(uuid, new SingleFilterOptions());
     }
 
     /**
@@ -379,7 +460,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    public Optional<Engagement> findByUuid(String uuid, Optional<FilterOptions> filterOptions) {
+    public Optional<Engagement> findByUuid(String uuid, SingleFilterOptions filterOptions) {
         Bson bson = eq("uuid", uuid);
         return Optional.ofNullable(find(Optional.of(bson), filterOptions).first());
     }
@@ -393,7 +474,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @return
      */
     public Optional<Engagement> findByCustomerNameAndProjectName(String customerName, String projectName) {
-        return findByCustomerNameAndProjectName(customerName, projectName, Optional.empty());
+        return findByCustomerNameAndProjectName(customerName, projectName, new SingleFilterOptions());
     }
 
     /**
@@ -409,7 +490,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @return
      */
     public Optional<Engagement> findByCustomerNameAndProjectName(String customerName, String projectName,
-            Optional<FilterOptions> filterOptions) {
+            SingleFilterOptions filterOptions) {
         Bson bson = and(eq("customerName", customerName), eq("projectName", projectName));
         return Optional.ofNullable(find(Optional.of(bson), filterOptions).first());
     }
@@ -423,7 +504,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    public List<Engagement> findAll(Optional<FilterOptions> filterOptions) {
+    public List<Engagement> findAll(SingleFilterOptions filterOptions) {
         return findAll(Optional.empty(), filterOptions);
     }
 
@@ -438,7 +519,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    public List<Engagement> findAll(Optional<Bson> filter, Optional<FilterOptions> filterOptions) {
+    public List<Engagement> findAll(Optional<Bson> filter, SingleFilterOptions filterOptions) {
         List<Engagement> list = new ArrayList<>();
         find(filter, filterOptions).iterator().forEachRemaining(list::add);
         return list;
@@ -453,24 +534,19 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    private FindIterable<Engagement> find(Optional<Bson> bson, Optional<FilterOptions> filterOptions) {
+    private FindIterable<Engagement> find(Optional<Bson> bson, SingleFilterOptions filterOptions) {
 
-        if (filterOptions.isPresent()) {
+        Optional<Set<String>> includeSet = filterOptions.getIncludeList();
+        Optional<Set<String>> excludeSet = filterOptions.getExcludeList();
 
-            FilterOptions options = filterOptions.get();
-            Optional<Set<String>> includeSet = options.getIncludeList();
-            Optional<Set<String>> excludeSet = options.getExcludeList();
+        // return only the attributes to include
+        if (includeSet.isPresent()) {
+            return getFindIterable(bson).projection(include(List.copyOf(includeSet.get())));
+        }
 
-            // return only the attributes to include
-            if (includeSet.isPresent()) {
-                return getFindIterable(bson).projection(include(List.copyOf(includeSet.get())));
-            }
-
-            // return only the attributes not excluded
-            if (excludeSet.isPresent()) {
-                return getFindIterable(bson).projection(exclude(List.copyOf(excludeSet.get())));
-            }
-
+        // return only the attributes not excluded
+        if (excludeSet.isPresent()) {
+            return getFindIterable(bson).projection(exclude(List.copyOf(excludeSet.get())));
         }
 
         // return full engagement if no filter

@@ -1,4 +1,4 @@
-package com.redhat.labs.lodestar.resource;
+package com.redhat.labs.lodestar.resource.config;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;

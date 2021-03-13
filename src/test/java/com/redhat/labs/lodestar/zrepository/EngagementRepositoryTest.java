@@ -17,8 +17,8 @@ import com.google.common.collect.Lists;
 import com.redhat.labs.lodestar.model.Artifact;
 import com.redhat.labs.lodestar.model.Category;
 import com.redhat.labs.lodestar.model.Engagement;
-import com.redhat.labs.lodestar.model.FilterOptions;
 import com.redhat.labs.lodestar.model.HostingEnvironment;
+import com.redhat.labs.lodestar.model.filter.ListFilterOptions;
 import com.redhat.labs.lodestar.repository.EngagementRepository;
 import com.redhat.labs.lodestar.utils.EmbeddedMongoTest;
 import com.redhat.labs.lodestar.utils.MockUtils;
@@ -276,7 +276,7 @@ class EngagementRepositoryTest {
         Engagement e1 = MockUtils.mockMinimumEngagement("c1", "c2", "1234");
         repository.persist(e1);
 
-        FilterOptions fo = FilterOptions.builder().include("uuid").build();
+        ListFilterOptions fo = ListFilterOptions.builder().include("uuid").build();
 
         Optional<Engagement> optional = repository.findByUuid("1234", Optional.of(fo));
         assertTrue(optional.isPresent());
@@ -293,7 +293,7 @@ class EngagementRepositoryTest {
         Engagement e1 = MockUtils.mockMinimumEngagement("c1", "c2", "1234");
         repository.persist(e1);
 
-        FilterOptions fo = FilterOptions.builder().exclude("uuid").build();
+        ListFilterOptions fo = ListFilterOptions.builder().exclude("uuid").build();
 
         Optional<Engagement> optional = repository.findByUuid("1234", Optional.of(fo));
         assertTrue(optional.isPresent());
@@ -325,7 +325,7 @@ class EngagementRepositoryTest {
         Engagement e1 = MockUtils.mockMinimumEngagement("c1", "c2", "1234");
         repository.persist(e1);
 
-        FilterOptions fo = FilterOptions.builder().include("uuid").build();
+        ListFilterOptions fo = ListFilterOptions.builder().include("uuid").build();
 
         Optional<Engagement> optional = repository.findByCustomerNameAndProjectName("c1", "c2", Optional.of(fo));
         assertTrue(optional.isPresent());
@@ -342,7 +342,7 @@ class EngagementRepositoryTest {
         Engagement e1 = MockUtils.mockMinimumEngagement("c1", "c2", "1234");
         repository.persist(e1);
 
-        FilterOptions fo = FilterOptions.builder().exclude("uuid").build();
+        ListFilterOptions fo = ListFilterOptions.builder().exclude("uuid").build();
 
         Optional<Engagement> optional = repository.findByCustomerNameAndProjectName("c1", "c2", Optional.of(fo));
         assertTrue(optional.isPresent());
@@ -370,7 +370,7 @@ class EngagementRepositoryTest {
         Engagement e1 = MockUtils.mockMinimumEngagement("c1", "c2", "1234");
         repository.persist(e1);
 
-        FilterOptions fo = FilterOptions.builder().include("uuid").build();
+        ListFilterOptions fo = ListFilterOptions.builder().include("uuid").build();
 
         List<Engagement> results = repository.findAll(Optional.of(fo));
         assertEquals(1, results.size());
@@ -388,7 +388,7 @@ class EngagementRepositoryTest {
         Engagement e1 = MockUtils.mockMinimumEngagement("c1", "c2", "1234");
         repository.persist(e1);
 
-        FilterOptions fo = FilterOptions.builder().exclude("uuid").build();
+        ListFilterOptions fo = ListFilterOptions.builder().exclude("uuid").build();
 
         List<Engagement> results = repository.findAll(Optional.of(fo));
         assertEquals(1, results.size());
