@@ -23,7 +23,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 
 import com.redhat.labs.lodestar.model.Engagement;
-import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
+import com.redhat.labs.lodestar.model.filter.FilterOptions;
 import com.redhat.labs.lodestar.resource.BackendResource;
 
 //@RequestScoped
@@ -126,7 +126,7 @@ public class EngagementResource extends BackendResource {
     public Response head(@PathParam("customerName") String customerName, @PathParam("projectName") String projectName) {
 
         Engagement engagement = getEngagementService().getByCustomerAndProjectName(customerName, projectName,
-                new SingleFilterOptions());
+                new FilterOptions());
         return Response.ok().header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
                 .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
 
@@ -265,7 +265,7 @@ public class EngagementResource extends BackendResource {
     @Timed(name = "engagement-head-by-uuid-timer", unit = MetricUnits.MILLISECONDS)
     public Response head(@PathParam("id") String uuid) {
 
-        Engagement engagement = getEngagementService().getByUuid(uuid, new SingleFilterOptions());
+        Engagement engagement = getEngagementService().getByUuid(uuid, new FilterOptions());
         return Response.ok().header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
                 .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
 

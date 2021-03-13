@@ -48,7 +48,7 @@ import com.redhat.labs.lodestar.model.Commit;
 import com.redhat.labs.lodestar.model.Engagement;
 import com.redhat.labs.lodestar.model.Status;
 import com.redhat.labs.lodestar.model.filter.ListFilterOptions;
-import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
+import com.redhat.labs.lodestar.model.filter.FilterOptions;
 import com.redhat.labs.lodestar.model.filter.SortOrder;
 
 import io.quarkus.mongodb.panache.PanacheMongoRepository;
@@ -63,7 +63,6 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
     private static final String NAME = "name";
     private static final String TYPE = "type";
     private static final String TO_LOWER_QUERY = "$toLower";
-    private static final String CASE_INSENSITIVE_QUERY = "(?i)%s";
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -441,7 +440,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @return
      */
     public Optional<Engagement> findByUuid(String uuid) {
-        return findByUuid(uuid, new SingleFilterOptions());
+        return findByUuid(uuid, new FilterOptions());
     }
 
     /**
@@ -455,7 +454,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    public Optional<Engagement> findByUuid(String uuid, SingleFilterOptions filterOptions) {
+    public Optional<Engagement> findByUuid(String uuid, FilterOptions filterOptions) {
         Bson bson = eq("uuid", uuid);
         return Optional.ofNullable(find(Optional.of(bson), filterOptions).first());
     }
@@ -469,7 +468,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @return
      */
     public Optional<Engagement> findByCustomerNameAndProjectName(String customerName, String projectName) {
-        return findByCustomerNameAndProjectName(customerName, projectName, new SingleFilterOptions());
+        return findByCustomerNameAndProjectName(customerName, projectName, new FilterOptions());
     }
 
     /**
@@ -485,7 +484,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @return
      */
     public Optional<Engagement> findByCustomerNameAndProjectName(String customerName, String projectName,
-            SingleFilterOptions filterOptions) {
+            FilterOptions filterOptions) {
         Bson bson = and(eq("customerName", customerName), eq("projectName", projectName));
         return Optional.ofNullable(find(Optional.of(bson), filterOptions).first());
     }
@@ -499,7 +498,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    public List<Engagement> findAll(SingleFilterOptions filterOptions) {
+    public List<Engagement> findAll(FilterOptions filterOptions) {
         return findAll(Optional.empty(), filterOptions);
     }
 
@@ -514,7 +513,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    public List<Engagement> findAll(Optional<Bson> filter, SingleFilterOptions filterOptions) {
+    public List<Engagement> findAll(Optional<Bson> filter, FilterOptions filterOptions) {
         List<Engagement> list = new ArrayList<>();
         find(filter, filterOptions).iterator().forEachRemaining(list::add);
         return list;
@@ -529,7 +528,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
      * @param filterOptions
      * @return
      */
-    private FindIterable<Engagement> find(Optional<Bson> bson, SingleFilterOptions filterOptions) {
+    private FindIterable<Engagement> find(Optional<Bson> bson, FilterOptions filterOptions) {
 
         Optional<Set<String>> includeSet = filterOptions.getIncludeList();
         Optional<Set<String>> excludeSet = filterOptions.getExcludeList();
@@ -582,7 +581,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
 
     }
 
-    private void setProjections(FindIterable<Engagement> findIterable, SingleFilterOptions filterOptions) {
+    private void setProjections(FindIterable<Engagement> findIterable, FilterOptions filterOptions) {
 
         Optional<Set<String>> includeSet = filterOptions.getIncludeList();
         Optional<Set<String>> excludeSet = filterOptions.getExcludeList();

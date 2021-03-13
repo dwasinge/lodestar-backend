@@ -33,7 +33,7 @@ import com.redhat.labs.lodestar.model.Launch;
 import com.redhat.labs.lodestar.model.Status;
 import com.redhat.labs.lodestar.model.event.EventType;
 import com.redhat.labs.lodestar.model.filter.ListFilterOptions;
-import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
+import com.redhat.labs.lodestar.model.filter.FilterOptions;
 import com.redhat.labs.lodestar.repository.EngagementRepository;
 import com.redhat.labs.lodestar.rest.client.LodeStarGitLabAPIService;
 
@@ -237,7 +237,7 @@ public class EngagementService {
 
         try {
             getByCustomerAndProjectName(toUpdate.getCustomerName(), toUpdate.getProjectName(),
-                    new SingleFilterOptions());
+                    new FilterOptions());
         } catch (WebApplicationException wae) {
             // return if not found
             return;
@@ -544,7 +544,7 @@ public class EngagementService {
      * @return
      */
     public Engagement getByCustomerAndProjectName(String customerName, String projectName,
-            SingleFilterOptions options) {
+            FilterOptions options) {
         return repository.findByCustomerNameAndProjectName(customerName, projectName, options)
                 .orElseThrow(() -> new WebApplicationException(
                         "no engagement found with customer:project " + customerName + ":" + projectName,
@@ -558,7 +558,7 @@ public class EngagementService {
      * @param uuid
      * @return
      */
-    public Engagement getByUuid(String uuid, SingleFilterOptions options) {
+    public Engagement getByUuid(String uuid, FilterOptions options) {
         return repository.findByUuid(uuid, options).orElseThrow(
                 () -> new WebApplicationException("no engagement found with id " + uuid, HttpStatus.SC_NOT_FOUND));
     }
@@ -569,14 +569,7 @@ public class EngagementService {
      * @return
      */
     public List<Engagement> getAll(ListFilterOptions filterOptions) {
-
         return repository.find(filterOptions);
-//        if (null == categories || categories.isBlank()) {
-//            return repository.findAll(filterOptions);
-//        }
-//
-//        return repository.findByCategories(categories, filterOptions);
-
     }
 
     /**
@@ -606,7 +599,7 @@ public class EngagementService {
      * @param projectName
      */
     public void deleteByCustomerAndProjectName(String customerName, String projectName) {
-        repository.delete(getByCustomerAndProjectName(customerName, projectName, new SingleFilterOptions()));
+        repository.delete(getByCustomerAndProjectName(customerName, projectName, new FilterOptions()));
     }
 
     /**
@@ -616,7 +609,7 @@ public class EngagementService {
      * @param uuid
      */
     public void deleteByUuid(String uuid) {
-        repository.delete(getByUuid(uuid, new SingleFilterOptions()));
+        repository.delete(getByUuid(uuid, new FilterOptions()));
     }
 
     /**
@@ -628,7 +621,7 @@ public class EngagementService {
     public void deleteEngagement(String uuid) {
 
         // get engagement by uuid
-        Engagement engagement = getByUuid(uuid, new SingleFilterOptions());
+        Engagement engagement = getByUuid(uuid, new FilterOptions());
 
         // throw 400 if already launched
         if (isLaunched(engagement)) {
@@ -784,7 +777,7 @@ public class EngagementService {
         if (null != uuid) {
 
             // find in database or throw 404
-            Engagement engagement = getByUuid(uuid, new SingleFilterOptions());
+            Engagement engagement = getByUuid(uuid, new FilterOptions());
 
             // send event for processing
             eventBus.sendAndForget(EventType.DELETE_AND_RELOAD_ENGAGEMENT_EVENT_ADDRESS,

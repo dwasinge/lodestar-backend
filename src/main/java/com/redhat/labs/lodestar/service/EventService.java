@@ -23,7 +23,7 @@ import com.redhat.labs.lodestar.model.Status;
 import com.redhat.labs.lodestar.model.event.EventType;
 import com.redhat.labs.lodestar.model.event.RetriableEvent;
 import com.redhat.labs.lodestar.model.event.RetriableEvent.RetriableEventBuilder;
-import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
+import com.redhat.labs.lodestar.model.filter.FilterOptions;
 import com.redhat.labs.lodestar.rest.client.LodeStarGitLabAPIService;
 
 import io.quarkus.vertx.ConsumeEvent;
@@ -134,7 +134,7 @@ public class EventService {
             try {
 
                 // get current engagement from db
-                Engagement persisted = engagementService.getByUuid(engagement.getUuid(), new SingleFilterOptions());
+                Engagement persisted = engagementService.getByUuid(engagement.getUuid(), new FilterOptions());
 
                 // only resend if exists and not updated
                 if (null != persisted && persisted.getLastUpdate().equals(engagement.getLastUpdate())) {

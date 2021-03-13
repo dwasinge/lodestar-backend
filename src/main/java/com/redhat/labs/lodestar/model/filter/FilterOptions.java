@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class SingleFilterOptions {
+public class FilterOptions {
 
     @Parameter(name = "include", required = false, description = "comma separated list of field names to include in response")
     @QueryParam("include")

@@ -12,7 +12,7 @@ import lombok.Setter;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListFilterOptions extends SingleFilterOptions {
+public class ListFilterOptions extends FilterOptions {
 
     @Setter
     @Parameter(name = "suggestion", required = false, description = "case insensitive search string")

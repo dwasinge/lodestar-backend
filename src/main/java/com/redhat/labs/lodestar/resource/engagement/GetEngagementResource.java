@@ -23,7 +23,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 
 import com.redhat.labs.lodestar.model.Engagement;
 import com.redhat.labs.lodestar.model.filter.ListFilterOptions;
-import com.redhat.labs.lodestar.model.filter.SingleFilterOptions;
+import com.redhat.labs.lodestar.model.filter.FilterOptions;
 import com.redhat.labs.lodestar.resource.BackendResource;
 
 @RequestScoped
@@ -42,7 +42,7 @@ public class GetEngagementResource extends BackendResource {
     @Counted(name = "engagement-get-counted")
     @Timed(name = "enagement-get-timer", unit = MetricUnits.MILLISECONDS)
     public Response get(@PathParam("customerName") String customerName, @PathParam("projectName") String projectName,
-            @BeanParam SingleFilterOptions filterOptions) {
+            @BeanParam FilterOptions filterOptions) {
 
         filterOptions.validateOptions();
 
@@ -78,7 +78,7 @@ public class GetEngagementResource extends BackendResource {
     @Operation(summary = "Returns the engagement resource for the given id.")
     @Counted(name = "engagement-get-by-uuid-counted")
     @Timed(name = "engagement-get-by-uuid-timer", unit = MetricUnits.MILLISECONDS)
-    public Response get(@PathParam("id") String uuid, @BeanParam SingleFilterOptions filterOptions) {
+    public Response get(@PathParam("id") String uuid, @BeanParam FilterOptions filterOptions) {
 
         filterOptions.validateOptions();
         Engagement engagement = getEngagementService().getByUuid(uuid, filterOptions);
