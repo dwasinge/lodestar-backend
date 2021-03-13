@@ -8,11 +8,13 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListFilterOptions {
+public class ListFilterOptions extends SingleFilterOptions {
 
+    @Setter
     @Parameter(name = "suggestion", required = false, description = "case insensitive search string")
     @QueryParam("suggestion")
     private String suggestion;

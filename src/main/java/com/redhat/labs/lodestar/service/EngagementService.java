@@ -568,13 +568,14 @@ public class EngagementService {
      * 
      * @return
      */
-    public List<Engagement> getAll(String categories, SingleFilterOptions filterOptions) {
+    public List<Engagement> getAll(ListFilterOptions filterOptions) {
 
-        if (null == categories || categories.isBlank()) {
-            return repository.findAll(filterOptions);
-        }
-
-        return repository.findByCategories(categories, filterOptions);
+        return repository.find(filterOptions);
+//        if (null == categories || categories.isBlank()) {
+//            return repository.findAll(filterOptions);
+//        }
+//
+//        return repository.findByCategories(categories, filterOptions);
 
     }
 

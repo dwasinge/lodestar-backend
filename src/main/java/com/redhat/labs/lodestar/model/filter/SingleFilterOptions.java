@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
@@ -25,6 +26,12 @@ public class SingleFilterOptions {
     @Parameter(name = "exclude", required = false, description = "comma separated list of field names to exclude in response")
     @QueryParam("exclude")
     private String exclude;
+
+    public void validateOptions() {
+        if(null != include && null != exclude) {
+            throw new WebApplicationException("cannot provide both include and exclude parameters", 400);
+        }
+    }
 
     public Optional<Set<String>> getIncludeList() {
 

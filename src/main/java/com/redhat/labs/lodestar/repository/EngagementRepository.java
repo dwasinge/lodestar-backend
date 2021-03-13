@@ -63,6 +63,7 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
     private static final String NAME = "name";
     private static final String TYPE = "type";
     private static final String TO_LOWER_QUERY = "$toLower";
+    private static final String CASE_INSENSITIVE_QUERY = "(?i)%s";
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -127,7 +128,8 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
         // paging and limits
         addPagingAndLimitStagesToPipeline(pipeline, options.getPage(), options.getPerPage(), options.getLimit());
 
-        return listFromIterable(mongoCollection().aggregate(pipeline, Map.class)).stream().map(m-> ((List<String>) m.get(CUSTOMER_NAME)).get(0)).collect(Collectors.toList());
+        return listFromIterable(mongoCollection().aggregate(pipeline, Map.class)).stream()
+                .map(m -> ((List<String>) m.get(CUSTOMER_NAME)).get(0)).collect(Collectors.toList());
 
     }
 
@@ -432,32 +434,6 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
     }
 
     /**
-     * Returns a {@link List} of {@link Engagement}s that contain the supplied
-     * categories.
-     * 
-     * If FilterOptions is provided, the associated projection will be used.
-     * Otherwise, all fields will be returned.
-     * 
-     * @param categories
-     * @param filterOptions
-     * @return
-     */
-    public List<Engagement> findByCategories(String categories, SingleFilterOptions filterOptions) {
-
-        // split the list
-        Set<String> categorySet = Stream.of(categories.split(",")).collect(Collectors.toSet());
-
-        // create regex for each category
-        List<Bson> regexs = categorySet.stream().map(category -> regex("categories.name", category, "i"))
-                .collect(Collectors.toList());
-
-        // or the regexs together
-        Bson bson = or(regexs);
-        return findAll(Optional.of(bson), filterOptions);
-
-    }
-
-    /**
      * Returns an {@link Optional} containing the {@link Engagement} with the UUID.
      * Otherwise, an empty {@link Optional} is returned.
      * 
@@ -572,6 +548,135 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
         return getFindIterable(bson);
 
     }
+
+    public List<Engagement> find(ListFilterOptions filterOptions) {
+
+        FindIterable<Engagement> findIterable = getFindIterable(getCategoryBson(filterOptions.getSuggestion()));
+
+        Optional<SortOrder> sortOrder = filterOptions.getSortOrder();
+        Bson sortBson = Sorts.ascending("customerName", "projectName");
+
+        if (sortOrder.isPresent() && SortOrder.DESC.equals(sortOrder.get())) {
+            sortBson = Sorts.descending("customerName", "projectName");
+        }
+
+        findIterable.sort(sortBson);
+
+        Optional<Integer> page = filterOptions.getPage();
+        Optional<Integer> limit = filterOptions.getLimit();
+
+        if (page.isPresent()) {
+
+            Integer pageNumber = page.get();
+            Integer perPage = filterOptions.getPerPage().orElse(20);
+            findIterable.skip(perPage * (pageNumber - 1));
+            findIterable.limit(perPage);
+
+        } else if (limit.isPresent()) {
+            findIterable.limit(limit.get());
+        }
+
+        setProjections(findIterable, filterOptions);
+
+        return listFromIterable(findIterable);
+
+    }
+
+    private void setProjections(FindIterable<Engagement> findIterable, SingleFilterOptions filterOptions) {
+
+        Optional<Set<String>> includeSet = filterOptions.getIncludeList();
+        Optional<Set<String>> excludeSet = filterOptions.getExcludeList();
+
+        // return only the attributes to include
+        if (includeSet.isPresent()) {
+            findIterable.projection(include(List.copyOf(includeSet.get())));
+        }
+
+        // return only the attributes not excluded
+        if (excludeSet.isPresent()) {
+            findIterable.projection(exclude(List.copyOf(excludeSet.get())));
+        }
+
+    }
+
+    private Optional<Bson> getCategoryBson(Optional<String> suggestion) {
+
+        if (suggestion.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // split the list
+        Set<String> categorySet = Stream.of(suggestion.get().split(",")).collect(Collectors.toSet());
+
+        // create regex for each category
+        List<Bson> regexs = categorySet.stream().map(category -> regex("categories.name", category, "i"))
+                .collect(Collectors.toList());
+
+        // or the regexs together
+        return Optional.of(or(regexs));
+
+    }
+
+    /**
+     * Returns a {@link List} of {@link Engagement}s that contain the supplied
+     * categories.
+     * 
+     * If FilterOptions is provided, the associated projection will be used.
+     * Otherwise, all fields will be returned.
+     * 
+     * @param categories
+     * @param filterOptions
+     * @return
+     */
+//    public Bson findByCategories(ListFilterOptions filterOptions) {
+//
+//        // split the list
+//        Optional<String> suggestion = filterOptions.getSuggestion();
+//        if (suggestion.isPresent()) {
+//
+////            Set<String> categorySet = Stream.of(suggestion.get().split(",")).collect(Collectors.toSet());
+////
+////            String q = "categories.name like (?i)%s";
+////
+////            List<String> regexs = categorySet.stream().map(category -> String.format(q, suggestion.get()))
+////                    .collect(Collectors.toList());
+////
+////            StringBuilder builder = new StringBuilder(regexs.remove(0));
+////            regexs.stream().forEach(r -> builder.append(" or ").append(r));
+////
+////            System.out.print(builder.toString());
+//
+//            // create regex for each category
+//            List<Bson> regexs = categorySet.stream().map(category -> regex("categories.name", category, "i"))
+//                    .collect(Collectors.toList());
+//
+//            // or the regexs together
+//            return or(regexs);
+//
+//        }
+//        return new ArrayList<>();
+////        String query = "categories.name like " + 
+////        
+////        String queryInput = String.format(CASE_INSENSITIVE_QUERY, input);
+////        return find("customerName like ?1", queryInput).list();
+//
+////        // split the list
+////        Optional<String> suggestion = filterOptions.getSuggestion();
+////        if (suggestion.isPresent()) {
+////
+////            Set<String> categorySet = Stream.of(suggestion.get().split(",")).collect(Collectors.toSet());
+////
+////            // create regex for each category
+////            List<Bson> regexs = categorySet.stream().map(category -> regex("categories.name", category, "i"))
+////                    .collect(Collectors.toList());
+////
+////            // or the regexs together
+////            Bson bson = or(regexs);
+////            return findAll(Optional.of(bson), filterOptions);
+////
+////        }
+//
+//    }
 
     /**
      * Returns a FindIterable for all {@link Engagement}s or the results of the
