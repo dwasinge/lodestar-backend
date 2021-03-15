@@ -81,8 +81,4 @@ public abstract class BackendResource {
 
     }
 
-    public EngagementService getEngagementService() {
-        return engagementService;
-    }
-
 }
