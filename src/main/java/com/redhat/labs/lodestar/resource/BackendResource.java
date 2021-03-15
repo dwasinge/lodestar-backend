@@ -8,7 +8,7 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import com.redhat.labs.lodestar.service.EngagementService;
 
-public abstract class BackendResource {
+public class BackendResource {
 
     private static final String NAME_CLAIM = "name";
     private static final String PREFERRED_USERNAME_CLAIM = "preferred_username";
