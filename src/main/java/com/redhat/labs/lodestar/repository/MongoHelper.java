@@ -58,9 +58,9 @@ public class MongoHelper {
         // parse search string
         String[] components = search.get().split("&");
 
-        if (searchString.contains("status=")) {
+        if (searchString.contains("state=")) {
 
-            Optional<String> status = findInComponentArray(components, "status");
+            Optional<String> status = findInComponentArray(components, "state");
             Optional<String> today = findInComponentArray(components, "today");
 
             bson = findByStatus(status, today);
@@ -91,7 +91,7 @@ public class MongoHelper {
 
         if (component.contains("=")) {
             String[] split = component.split("=");
-            String fieldName = ClassFieldUtils.snakeToCamelCase(split[0]);
+            String fieldName = ClassFieldUtils.getFieldNameFromQueryName(split[0]);
             String value = split[1];
             if ("after".equals(fieldName)) {
                 return Optional.of(isActiveAfterStart(value));
@@ -102,7 +102,7 @@ public class MongoHelper {
             }
         } else if (component.contains("like")) {
             String[] split = component.trim().split("\\s+like\\s+");
-            String fieldName = ClassFieldUtils.snakeToCamelCase(split[0]);
+            String fieldName = ClassFieldUtils.getFieldNameFromQueryName(split[0]);
             String value = split[1];
             return Optional.of(regex(fieldName, value, "i"));
         } else if (component.contains("not") && component.contains(EXISTS)) {

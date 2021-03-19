@@ -66,7 +66,7 @@ public class FilterOptions {
             return new HashSet<>();
         }
 
-        return Stream.of(value.split(",")).map(ClassFieldUtils::snakeToCamelCase).collect(Collectors.toSet());
+        return Stream.of(value.split(",")).map(ClassFieldUtils::getFieldNameFromQueryName).collect(Collectors.toSet());
 
     }
 
