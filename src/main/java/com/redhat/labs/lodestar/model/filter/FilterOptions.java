@@ -1,20 +1,22 @@
 package com.redhat.labs.lodestar.model.filter;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
+import com.redhat.labs.lodestar.util.ClassFieldUtils;
+
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class FilterOptions {
@@ -26,12 +28,6 @@ public class FilterOptions {
     @Parameter(name = "exclude", required = false, description = "comma separated list of field names to exclude in response")
     @QueryParam("exclude")
     private String exclude;
-
-    public void validateOptions() {
-        if(null != include && null != exclude) {
-            throw new WebApplicationException("cannot provide both include and exclude parameters", 400);
-        }
-    }
 
     public Optional<Set<String>> getIncludeList() {
 
@@ -70,26 +66,7 @@ public class FilterOptions {
             return new HashSet<>();
         }
 
-        return Stream.of(value.split(",")).map(this::snakeToCamelCase).collect(Collectors.toSet());
-
-    }
-
-    private String snakeToCamelCase(String value) {
-
-        // split lowercase value based on underscore
-        List<String> tokens = Stream.of(value.toLowerCase().split("_")).collect(Collectors.toList());
-
-        // start string with first lower case token
-        StringBuilder builder = new StringBuilder(tokens.remove(0));
-
-        // capitalize first letter of each remaining token
-        tokens.stream().forEach(token -> {
-            String tmp = (1 == token.length()) ? token.toUpperCase()
-                    : token.substring(0, 1).toUpperCase() + token.substring(1);
-            builder.append(tmp);
-        });
-
-        return builder.toString();
+        return Stream.of(value.split(",")).map(ClassFieldUtils::snakeToCamelCase).collect(Collectors.toSet());
 
     }
 

@@ -236,8 +236,7 @@ public class EngagementService {
         }
 
         try {
-            getByCustomerAndProjectName(toUpdate.getCustomerName(), toUpdate.getProjectName(),
-                    new FilterOptions());
+            getByCustomerAndProjectName(toUpdate.getCustomerName(), toUpdate.getProjectName(), new FilterOptions());
         } catch (WebApplicationException wae) {
             // return if not found
             return;
@@ -543,8 +542,7 @@ public class EngagementService {
      * @param projectId
      * @return
      */
-    public Engagement getByCustomerAndProjectName(String customerName, String projectName,
-            FilterOptions options) {
+    public Engagement getByCustomerAndProjectName(String customerName, String projectName, FilterOptions options) {
         return repository.findByCustomerNameAndProjectName(customerName, projectName, options)
                 .orElseThrow(() -> new WebApplicationException(
                         "no engagement found with customer:project " + customerName + ":" + projectName,
@@ -569,7 +567,7 @@ public class EngagementService {
      * @return
      */
     public List<Engagement> getAll(ListFilterOptions filterOptions) {
-        return repository.find(filterOptions);
+        return repository.findAll(filterOptions);
     }
 
     /**

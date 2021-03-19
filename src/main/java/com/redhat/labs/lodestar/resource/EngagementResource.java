@@ -28,6 +28,7 @@ import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.eclipse.microprofile.metrics.annotation.Timed;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
@@ -102,8 +103,6 @@ public class EngagementResource extends BackendResource {
     public Response get(@PathParam("customerName") String customerName, @PathParam("projectName") String projectName,
             @BeanParam FilterOptions filterOptions) {
 
-        filterOptions.validateOptions();
-
         Engagement engagement = engagementService.getByCustomerAndProjectName(customerName, projectName, filterOptions);
         return Response.ok(engagement).header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
                 .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
@@ -136,12 +135,16 @@ public class EngagementResource extends BackendResource {
     @Operation(summary = "Returns all engagement resources from the database.  Can be empty list if none found.")
     @Counted(name = "engagement-get-all-counted")
     @Timed(name = "engagement-get-all-timer", unit = MetricUnits.MILLISECONDS)
-    public List<Engagement> getAll(@QueryParam("categories") String categories, @BeanParam ListFilterOptions filterOptions) {
+    public List<Engagement> getAll(
+            @Parameter(deprecated = true, description = "use search instead") @QueryParam("categories") String categories,
+            @BeanParam ListFilterOptions filterOptions) {
 
         // set suggest option if set
-        filterOptions.setSuggestion(categories);
+        if (null != categories) {
+            filterOptions.addLikeSearchCriteria("categories.name", categories);
+        }
         return engagementService.getAll(filterOptions);
-        
+
     }
 
     @GET
@@ -152,11 +155,15 @@ public class EngagementResource extends BackendResource {
     @Operation(summary = "Returns customers list")
     @Counted(name = "engagement-suggest-url-counted")
     @Timed(name = "engagement-suggest-url-timer", unit = MetricUnits.MILLISECONDS)
-    public Response findCustomers(@BeanParam ListFilterOptions filterOptions) {
+    public Response findCustomers(@QueryParam("suggest") String suggest, @BeanParam ListFilterOptions filterOptions) {
 
+        // add suggest to search string
+        if (null != suggest) {
+            filterOptions.addLikeSearchCriteria("customer_name", suggest);
+        }
         Collection<String> customerSuggestions = engagementService.getSuggestions(filterOptions);
-
         return Response.ok(customerSuggestions).build();
+
     }
 
     @GET
@@ -167,8 +174,11 @@ public class EngagementResource extends BackendResource {
     @Operation(summary = "Returns customers list")
     @Counted(name = "engagement-get-all-categories-counted")
     @Timed(name = "engagement-get-all-categories-timer", unit = MetricUnits.MILLISECONDS)
-    public List<Category> list(@BeanParam ListFilterOptions options) {
-        return engagementService.getCategories(options);
+    public List<Category> list(@QueryParam("suggest") String suggest, @BeanParam ListFilterOptions filterOptions) {
+        if (null != suggest) {
+            filterOptions.addLikeSearchCriteria("categories.name", suggest);
+        }
+        return engagementService.getCategories(filterOptions);
     }
 
     @GET
@@ -179,7 +189,11 @@ public class EngagementResource extends BackendResource {
     @Operation(summary = "Returns artifact type list")
     @Counted(name = "engagement-get-all-artifacts-counted")
     @Timed(name = "engagement-get-all-artifacts-timer", unit = MetricUnits.MILLISECONDS)
-    public List<String> getArtifactTypes(@BeanParam ListFilterOptions filterOptions) {
+    public List<String> getArtifactTypes(@QueryParam("suggest") String suggest,
+            @BeanParam ListFilterOptions filterOptions) {
+        if (null != suggest) {
+            filterOptions.addLikeSearchCriteria("artifacts.type", suggest);
+        }
         return engagementService.getArtifactTypes(filterOptions);
     }
 
@@ -246,7 +260,6 @@ public class EngagementResource extends BackendResource {
     @Timed(name = "engagement-get-by-uuid-timer", unit = MetricUnits.MILLISECONDS)
     public Response get(@PathParam("id") String uuid, @BeanParam FilterOptions filterOptions) {
 
-        filterOptions.validateOptions();
         Engagement engagement = engagementService.getByUuid(uuid, filterOptions);
         return Response.ok(engagement).header(LAST_UPDATE_HEADER, engagement.getLastUpdate())
                 .header(ACCESS_CONTROL_EXPOSE_HEADER, LAST_UPDATE_HEADER).build();
