@@ -155,7 +155,9 @@ public class EngagementResource extends BackendResource {
     @Operation(summary = "Returns customers list")
     @Counted(name = "engagement-suggest-url-counted")
     @Timed(name = "engagement-suggest-url-timer", unit = MetricUnits.MILLISECONDS)
-    public Response findCustomers(@QueryParam("suggest") String suggest, @BeanParam ListFilterOptions filterOptions) {
+    public Response findCustomers(
+            @Parameter(deprecated = true, description = "use search instead") @QueryParam("suggest") String suggest,
+            @BeanParam ListFilterOptions filterOptions) {
 
         // add suggest to search string
         if (null != suggest) {
@@ -174,7 +176,9 @@ public class EngagementResource extends BackendResource {
     @Operation(summary = "Returns customers list")
     @Counted(name = "engagement-get-all-categories-counted")
     @Timed(name = "engagement-get-all-categories-timer", unit = MetricUnits.MILLISECONDS)
-    public List<Category> list(@QueryParam("suggest") String suggest, @BeanParam ListFilterOptions filterOptions) {
+    public List<Category> list(
+            @Parameter(deprecated = true, description = "use search instead") @QueryParam("suggest") String suggest,
+            @BeanParam ListFilterOptions filterOptions) {
         if (null != suggest) {
             filterOptions.addLikeSearchCriteria("categories.name", suggest);
         }
@@ -189,7 +193,8 @@ public class EngagementResource extends BackendResource {
     @Operation(summary = "Returns artifact type list")
     @Counted(name = "engagement-get-all-artifacts-counted")
     @Timed(name = "engagement-get-all-artifacts-timer", unit = MetricUnits.MILLISECONDS)
-    public List<String> getArtifactTypes(@QueryParam("suggest") String suggest,
+    public List<String> getArtifactTypes(
+            @Parameter(deprecated = true, description = "use search instead") @QueryParam("suggest") String suggest,
             @BeanParam ListFilterOptions filterOptions) {
         if (null != suggest) {
             filterOptions.addLikeSearchCriteria("artifacts.type", suggest);
