@@ -1,17 +1,18 @@
 package com.redhat.labs.lodestar.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder(toBuilder = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UseCase {
+@EqualsAndHashCode(callSuper = true)
+public class UseCase extends EngagementAttribute {
 
-    private String id;
     private String title;
     private String description;
     private Integer order;

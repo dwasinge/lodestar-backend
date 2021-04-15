@@ -25,6 +25,7 @@ import com.redhat.labs.lodestar.model.Category;
 import com.redhat.labs.lodestar.model.Commit;
 import com.redhat.labs.lodestar.model.CreationDetails;
 import com.redhat.labs.lodestar.model.Engagement;
+import com.redhat.labs.lodestar.model.EngagementAttribute;
 import com.redhat.labs.lodestar.model.EngagementUser;
 import com.redhat.labs.lodestar.model.EngagementUserSummary;
 import com.redhat.labs.lodestar.model.Hook;
@@ -398,6 +399,65 @@ public class EngagementService {
 
         }
 
+        // set ids and/or time stamps for modified attributes
+        setIdsAndTimestamps(engagement, existing);
+
+    }
+
+    void setIdsAndTimestamps(Engagement engagement, Engagement existing) {
+
+        // categories
+        setIdAndTimstampsOnEngagementAttribute(engagement.getCategories(), existing.getCategories());
+
+        // artifacts
+        setIdAndTimstampsOnEngagementAttribute(engagement.getArtifacts(), existing.getArtifacts());
+
+        // use cases
+        setIdAndTimstampsOnEngagementAttribute(engagement.getUseCases(), existing.getUseCases());
+
+        // scores
+        setIdAndTimstampsOnEngagementAttribute(engagement.getScores(), existing.getScores());
+
+        // hosting environments
+        setIdAndTimstampsOnEngagementAttribute(engagement.getHostingEnvironments(), existing.getHostingEnvironments());
+
+    }
+
+    void setIdAndTimstampsOnEngagementAttribute(List<? extends EngagementAttribute> incoming, List<? extends EngagementAttribute> existing) {
+
+        // nothing to do if incoming is null
+        if (null == incoming) {
+            return;
+        }
+
+        // all new, set id and time stamps
+        if (existing == null) {
+            setIdAndTimestampsOnEngagementAttributes(incoming);
+            return;
+        }
+
+        // check if each attribute in incoming already exists, if true, and modified,
+        // set updated ts
+        incoming.stream().forEach(ia -> {
+
+            // need list of new and already exists
+            Optional<? extends EngagementAttribute> optional = existing.stream()
+                    .filter(ea -> null != ia.getId() && ia.getId().equals(ea.getId())).findAny();
+            if (optional.isPresent()) {
+
+                // set updated ts if modified
+                if (!ia.equals(optional.get())) {
+                    ia.setUpdated();
+                }
+
+            } else {
+
+                setIdAndTimestamps(ia);
+
+            }
+
+        });
+
     }
 
     /**
@@ -719,7 +779,10 @@ public class EngagementService {
         // set engagement user(s) uuids if required
         boolean uUuidSet = setUuidOnUsers(engagement.getEngagementUsers());
 
-        return eUuidSet || uUuidSet;
+        // set other attribute uuids if required
+        boolean aUuidSet = setUuidOnEngagementAttributes(engagement);
+
+        return eUuidSet || uUuidSet || aUuidSet;
 
     }
 
@@ -765,6 +828,44 @@ public class EngagementService {
         }
 
         return false;
+
+    }
+
+    boolean setUuidOnEngagementAttributes(Engagement engagement) {
+
+        // artifacts, categories, use cases, scores, hosting envs
+        return setIdAndTimestampsOnEngagementAttributes(engagement.getArtifacts())
+                || setIdAndTimestampsOnEngagementAttributes(engagement.getCategories())
+                || setIdAndTimestampsOnEngagementAttributes(engagement.getUseCases())
+                || setIdAndTimestampsOnEngagementAttributes(engagement.getScores())
+                || setIdAndTimestampsOnEngagementAttributes(engagement.getHostingEnvironments());
+
+    }
+
+    boolean setIdAndTimestampsOnEngagementAttributes(List<? extends EngagementAttribute> attributes) {
+
+        if (null != attributes) {
+            return attributes.stream().map(this::setIdAndTimestamps).collect(Collectors.toSet()).contains(Boolean.TRUE);
+        }
+
+        return false;
+
+    }
+
+    Boolean setIdAndTimestamps(EngagementAttribute attribute) {
+
+        if (null == attribute.getId()) {
+
+            // generate id
+            attribute.generateId();
+            // set both created and updated
+            attribute.setCreatedAndUpdated();
+
+            return Boolean.TRUE;
+
+        }
+
+        return Boolean.FALSE;
 
     }
 

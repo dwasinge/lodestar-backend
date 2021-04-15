@@ -3,15 +3,17 @@ package com.redhat.labs.lodestar.model;
 import javax.json.bind.annotation.JsonbProperty;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder(toBuilder = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class HostingEnvironment {
+@EqualsAndHashCode(callSuper = true)
+public class HostingEnvironment extends EngagementAttribute {
 
     @JsonbProperty("id")
     private String id;

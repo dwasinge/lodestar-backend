@@ -11,9 +11,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Category extends EngagementAttribute {
+public class Score extends EngagementAttribute {
 
     private String name;
-    private Integer count;
+    private Double value;
 
 }
