@@ -7,7 +7,6 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
@@ -18,7 +17,6 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class EngagementAttribute {
 
-    @Setter
     private String id;
     private String created;
     private String updated;

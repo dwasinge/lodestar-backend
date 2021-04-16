@@ -6,17 +6,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 public class HostingEnvironment extends EngagementAttribute {
-
-    @JsonbProperty("id")
-    private String id;
 
     @JsonbProperty("environment_name")
     private String environmentName;
