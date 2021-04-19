@@ -691,15 +691,15 @@ class EngagementServiceTest {
     void testSetNullUuidsAlreadySet() {
 
         UseCase u1 = MockUtils.mockUseCase("case 1", "case one", 0);
-        u1.setId(UUID.randomUUID().toString());
+        u1.setUuid(UUID.randomUUID().toString());
         u1.setCreatedAndUpdated();
         UseCase u2 = MockUtils.mockUseCase("case 2", "case two", 1);
         Category c1 = MockUtils.mockCategory("cat1");
-        c1.setId(UUID.randomUUID().toString());
+        c1.setUuid(UUID.randomUUID().toString());
         c1.setCreatedAndUpdated();
         Category c2 = MockUtils.mockCategory("cat2");
         Artifact a1 = MockUtils.mockArtifact("demo 1", "demo", "http://demo-1");
-        a1.setId(UUID.randomUUID().toString());
+        a1.setUuid(UUID.randomUUID().toString());
         a1.setCreatedAndUpdated();
         Artifact a2 = MockUtils.mockArtifact("demo 2", "demo", "http://demo-2");
         EngagementUser user1 = MockUtils.mockEngagementUser("b.s@example.com", "bill", "smith", "dev", "1234", false);
@@ -711,11 +711,11 @@ class EngagementServiceTest {
         e1.setUseCases(Arrays.asList(u1, u2));
 
         HostingEnvironment he1 = MockUtils.mockHostingEnvironment("env1", "env1");
-        he1.setId(UUID.randomUUID().toString());
+        he1.setUuid(UUID.randomUUID().toString());
         he1.setCreatedAndUpdated();
         HostingEnvironment he2 = MockUtils.mockHostingEnvironment("env2", "env2");
         Score s1 = MockUtils.mockScore("score1", 90.9);
-        s1.setId(UUID.randomUUID().toString());
+        s1.setUuid(UUID.randomUUID().toString());
         s1.setCreatedAndUpdated();
         Score s2 = MockUtils.mockScore("score2", 55.4);
         EngagementUser user3 = MockUtils.mockEngagementUser("j.s@example.com", "jim", "smith", "dev", null, false);
@@ -886,13 +886,13 @@ class EngagementServiceTest {
         // will be updated
         Artifact a1 = MockUtils.mockArtifact("report 1", "report", "http://report-1");
         String a1Id = UUID.randomUUID().toString();
-        a1.setId(a1Id);
+        a1.setUuid(a1Id);
         a1.setCreatedAndUpdated();
 
         // will not be updated
         Artifact a2 = MockUtils.mockArtifact("whitepaper 1", "whitepaper", "http://whitepaper-1");
         String a2Id = UUID.randomUUID().toString();
-        a2.setId(a2Id);
+        a2.setUuid(a2Id);
         a2.setCreatedAndUpdated();
 
         persisted.setArtifacts(Arrays.asList(a1, a2));
@@ -923,7 +923,7 @@ class EngagementServiceTest {
         // category should be added
         assertEquals(1, updated.getCategories().size());
         Category c = updated.getCategories().get(0);
-        assertNotNull(c.getId());
+        assertNotNull(c.getUuid());
         assertNotNull(c.getCreated());
         assertNotNull(c.getUpdated());
         assertEquals("category1", c.getName());
@@ -933,15 +933,15 @@ class EngagementServiceTest {
 
         updated.getArtifacts().stream().forEach(a -> {
 
-            assertNotNull(c.getId());
+            assertNotNull(c.getUuid());
 
-            if (a.getId().equals(a1.getId())) {
+            if (a.getUuid().equals(a1.getUuid())) {
 
                 // a1 created unchanged, modified changed
                 assertEquals(a1.getCreated(), a.getCreated());
                 assertNotEquals(a1.getUpdated(), a.getUpdated());
 
-            } else if (a.getId().equals(a2.getId())) {
+            } else if (a.getUuid().equals(a2.getUuid())) {
 
                 // a2 created unchanged, modified unchanged
                 assertEquals(a2.getCreated(), a.getCreated());

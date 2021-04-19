@@ -17,13 +17,14 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 public class EngagementAttribute {
 
-    private String id;
+    private String uuid;
     private String created;
     private String updated;
+    private String engagementUuid;
 
     public void generateId() {
-        if (null == id) {
-            id = UUID.randomUUID().toString();
+        if (null == uuid) {
+            uuid = UUID.randomUUID().toString();
         }
     }
 
