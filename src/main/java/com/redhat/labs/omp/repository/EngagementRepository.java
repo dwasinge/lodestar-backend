@@ -32,6 +32,7 @@ import com.mongodb.client.model.Field;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
+import com.redhat.labs.omp.model.Artifact;
 import com.redhat.labs.omp.model.Category;
 import com.redhat.labs.omp.model.Engagement;
 import com.redhat.labs.omp.model.FileAction;
@@ -114,6 +115,39 @@ public class EngagementRepository implements PanacheMongoRepository<Engagement> 
                     ), Category.class);
 
         return StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+
+    }
+
+    public List<String> findArtifactTypeSuggestions(String input) {
+
+        // get all unique categories
+        Iterable<Artifact> iterable =
+            mongoCollection().aggregate(Arrays.asList(
+                    unwind("$artifacts"),
+                    match(regex("artifacts.type", String.format("(?i)%s", input))),
+                    addFields(new Field<>("artifacts.lower_type", new Document("$toLower", "$artifacts.type"))),
+                    group("$artifacts.lower_type"),
+                    project(new Document().append("type", "$_id")),
+                    sort(Sorts.ascending("type"))
+                    ), Artifact.class);
+
+        return StreamSupport.stream(iterable.spliterator(), false).map(artifact -> artifact.getType()).collect(Collectors.toList());
+
+    }
+
+    public List<String> findAllArtifactTypes() {
+
+        // get all unique categories
+        Iterable<Artifact> iterable =
+            mongoCollection().aggregate(Arrays.asList(
+                    unwind("$artifacts"),
+                    addFields(new Field<>("artifacts.lower_type", new Document("$toLower", "$artifacts.type"))),
+                    group("$artifacts.lower_type"),
+                    project(new Document().append("type", "$_id")),
+                    sort(Sorts.ascending("type"))
+                    ), Artifact.class);
+
+        return StreamSupport.stream(iterable.spliterator(), false).map(artifact -> artifact.getType()).collect(Collectors.toList());
 
     }
 

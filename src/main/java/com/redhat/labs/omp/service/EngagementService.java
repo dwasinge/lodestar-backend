@@ -295,6 +295,16 @@ public class EngagementService {
 
     }
 
+    public List<String> getArtifactTypes(String match) {
+
+        if(null == match || match.isBlank()) {
+            return repository.findAllArtifactTypes();
+        }
+
+        return repository.findArtifactTypeSuggestions(match);
+
+    }
+
     /**
      * Updates the {@link List} of {@link Engagement} in the data store.
      * 
